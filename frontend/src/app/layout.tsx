@@ -14,7 +14,7 @@ const readexPro = Readex_Pro({
 });
 
 const notoSansArabic = Noto_Sans_Arabic({
-  subsets: ['arabic', 'latin'],
+  subsets: ['arabic'],
   weight: ['300', '400', '500', '600', '700'],
   variable: '--font-arabic',
   display: 'swap',
