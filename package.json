@@ -1,0 +1,13 @@
+{
+  "name": "abo-kartona-workspace",
+  "private": true,
+  "scripts": {
+  "dev": "next dev",
+  "build": "next build",
+  "start": "next start",
+  "lint": "next lint"
+},
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

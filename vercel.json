@@ -1,0 +1,7 @@
+{
+  "env": {
+    "NEXT_PUBLIC_API_BASE_URL": "https://test-qaap.onrender.com",
+    "MONGODB_URI": "@mongodb_uri",
+    "JWT_SECRET": "@jwt_secret"
+  }
+}

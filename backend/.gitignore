@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment variables - NEVER commit these
+.env
+.env.local
+.env.*.local
+.env.backup
+.env.production
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Uploads
+uploads/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Security
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Testing
+coverage/
+.nyc_output/
+
+# Misc
+.cache/
+dist/
+build/
