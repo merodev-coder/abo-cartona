@@ -32,42 +32,34 @@ export function useTheme() {
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [storeTheme, setStoreThemeState] = useState<ThemeMode>('normal');
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const savedStoreTheme = localStorage.getItem('store-theme') as ThemeMode | null;
-
     if (savedStoreTheme && themeColors[savedStoreTheme]) {
       setStoreThemeState(savedStoreTheme);
+      const root = document.documentElement;
+      root.setAttribute('data-theme', savedStoreTheme);
+      root.classList.add('dark');
     }
-
-    setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (!mounted) return;
+    localStorage.setItem('store-theme', storeTheme);
+  }, [storeTheme]);
+
+  useEffect(() => {
     const root = document.documentElement;
     root.setAttribute('data-theme', storeTheme);
     root.classList.add('dark');
-    localStorage.setItem('store-theme', storeTheme);
-  }, [storeTheme, mounted]);
+  }, [storeTheme]);
 
   const setStoreTheme = (newTheme: ThemeMode) => {
     setStoreThemeState(newTheme);
   };
 
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
   return (
     <ThemeContext.Provider
-      value={{
-        theme: 'dark',
-        storeTheme,
-        setStoreTheme,
-        storeThemeColor: themeColors[storeTheme],
-      }}
+      value={{ theme: 'dark', storeTheme, setStoreTheme, storeThemeColor: themeColors[storeTheme] }}
     >
       {children}
     </ThemeContext.Provider>

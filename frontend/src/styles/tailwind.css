@@ -14,34 +14,34 @@
    Zero magic numbers. Zero hardcoded hex in components.
    ═══════════════════════════════════════════════════════ */
 
-/* ─── Abu Kartona Light Mode (Default) ─── */
+/* ─── AboCartona Light Mode (Default) ─── */
 :root {
-  /* ─── Abu Kartona Brand ─── */
+  /* ─── AboCartona Brand ─── */
   --color-brand-500: #37d7ac; /* Iconic green */
   --color-brand-600: #2cb38f; /* Darker variant */
   --color-brand-400: #5fe3bf; /* Lighter variant */
   --color-secondary-500: #6366f1;
   --color-accent-500: #f59e0b;
 
-  /* ─── Abu Kartona Surfaces ─── */
+  /* ─── AboCartona Surfaces ─── */
   --color-surface: #fafaf9; /* Warm stone white */
   --color-surface-secondary: #f5f5f4; /* Light warm gray */
   --color-surface-tertiary: #e7e5e4; /* Subtle warm gray */
   --color-surface-elevated: #ffffff;
   --color-surface-card: #ffffff;
 
-  /* ─── Abu Kartona Text ─── */
+  /* ─── AboCartona Text ─── */
   --color-text: #0c0a09; /* Stone black for high contrast */
   --color-text-primary: #0c0a09;
   --color-text-secondary: #57534e;
   --color-text-muted: #a8a29e;
 
-  /* ─── Abu Kartona Borders ─── */
+  /* ─── AboCartona Borders ─── */
   --color-border: #e7e5e4; /* Warm stone borders */
   --color-border-light: #f5f5f4;
   --color-border-subtle: #fafaf9;
 
-  /* ─── Abu Kartona Shadows ─── */
+  /* ─── AboCartona Shadows ─── */
   --color-shadow-card: rgba(0, 0, 0, 0.04);
   --color-shadow-elevated: rgba(0, 0, 0, 0.08);
 
@@ -85,14 +85,14 @@
 }
 
 [data-theme='dark'] {
-  /* ─── Abu Kartona Brand (Dark Mode) ─── */
+  /* ─── AboCartona Brand (Dark Mode) ─── */
   --color-brand-500: #37d7ac; /* Keep iconic green */
   --color-brand-600: #5fe3bf; /* Lighter for dark mode */
   --color-brand-400: #2cb38f; /* Darker variant */
   --color-secondary-500: #818cf8;
   --color-accent-500: #fbbf24;
 
-  /* ─── Abu Kartona Surfaces (Dark Mode) ─── */
+  /* ─── AboCartona Surfaces (Dark Mode) ─── */
   --color-surface: #0c0a09; /* Warm dark stone */
   --color-surface-secondary: #1c1917; /* Slightly lighter */
   --color-surface-tertiary: #292524; /* Elevated surfaces */
@@ -103,7 +103,7 @@
   --color-surface-dark-secondary: #1c1917;
   --color-surface-dark-tertiary: #292524;
 
-  /* ─── Abu Kartona Text (Dark Mode) ─── */
+  /* ─── AboCartona Text (Dark Mode) ─── */
   --color-text: #fafaf9; /* Warm white for contrast */
   --color-text-secondary: #a8a29e;
   --color-text-muted: #78716c;
@@ -112,13 +112,13 @@
   --color-text-dark-secondary: #a8a29e;
   --color-text-dark-muted: #78716c;
 
-  /* ─── Abu Kartona Borders (Dark Mode) ─── */
+  /* ─── AboCartona Borders (Dark Mode) ─── */
   --color-border: rgba(255, 255, 255, 0.08);
   --color-border-subtle: rgba(255, 255, 255, 0.04);
   /* Border-dark variant */
   --color-border-dark: rgba(255, 255, 255, 0.08);
 
-  /* ─── Abu Kartona Shadows (Dark Mode) ─── */
+  /* ─── AboCartona Shadows (Dark Mode) ─── */
   --color-shadow-card: rgba(0, 0, 0, 0.4);
   --color-shadow-elevated: rgba(0, 0, 0, 0.6);
 

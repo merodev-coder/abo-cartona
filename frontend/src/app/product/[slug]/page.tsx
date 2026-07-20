@@ -18,7 +18,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
   if (!doc) {
     return (
-      <div className="min-h-screen bg-surface bg-surface flex flex-col" dir="rtl">
+      <div className="min-h-screen flex flex-col" dir="rtl" style={{ background: '#080C14' }}>
         <Header />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center px-4">

@@ -1,162 +1,191 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WhatsAppButton from '@/components/WhatsAppButton';
 import ProductCard from '@/components/ProductCard';
-import Icon from '@/components/ui/AppIcon';
 import { useStore, type Product } from '@/store/useStore';
 import { getApiUrl } from '@/lib/apiConfig';
+import Link from 'next/link';
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
-};
-
-const itemVariants: any = {
-  hidden: { opacity: 0, y: 30, scale: 0.95 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } },
-};
+const BRAND = 'rgba(55,215,172,1)';
+const BRAND_HEX = '#37D7AC';
 
 export default function SalesPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [notification, setNotification] = useState<string | null>(null);
   const { addToCart, addToDrive, driveItems } = useStore();
-
-  const storageInfo = { total: 1000, used: 0, hasDrive: false };
 
   useEffect(() => {
     fetch(getApiUrl('products?isSale=true'), { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
-        // Filter out data products from sales page
-        const filteredProducts = (data.products || []).filter((p: Product) => p.type !== 'data');
-        setProducts(filteredProducts);
+        const filtered = (data.products || []).filter((p: Product) => p.type !== 'data');
+        setProducts(filtered);
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, []);
 
-  const showNotification = useCallback((msg: string) => {
-    setNotification(msg);
-    setTimeout(() => setNotification(null), 2500);
-  }, []);
-
-  const handleAddToCart = useCallback(
-    (product: Product) => {
-      addToCart(product);
-      showNotification(`✓ تمت إضافة "${product.name}" للسلة`);
-    },
-    [addToCart, showNotification]
-  );
-
-  const handleAddToDrive = useCallback(
-    (product: Product) => {
-      const sizeNum = product.storageCapacity || 0;
-      const currentUsed = driveItems.reduce(
-        (acc, p) => acc + (p.storageCapacity || 0),
-        storageInfo.used
-      );
-      if (currentUsed + sizeNum > storageInfo.total) {
-        showNotification('⚠️ مساحة الهارد مش كفاية لهذا الملف');
-        return;
-      }
-      addToDrive(product);
-      showNotification(`✓ تمت إضافة "${product.name}" للدرايف مجاناً`);
-    },
-    [addToDrive, driveItems, storageInfo, showNotification]
-  );
-
   return (
-    <div className="min-h-screen bg-surface" dir="rtl">
+    <div className="min-h-screen" dir="rtl" style={{ background: '#080C14' }}>
+      {/* Subtle ambient glow */}
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 pointer-events-none z-0"
+        style={{
+          background: 'radial-gradient(ellipse 60% 50% at 80% 10%, rgba(55,215,172,0.06) 0%, transparent 70%)',
+        }}
+      />
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 pointer-events-none z-0"
+        style={{
+          opacity: 0.012,
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+        }}
+      />
+
+      {/* Top accent line */}
+      <div className="fixed top-0 left-0 right-0 h-px z-50" style={{ background: 'linear-gradient(90deg, transparent, rgba(55,215,172,0.3) 50%, transparent)' }} />
+
       <Header />
 
-      <AnimatePresence>
-        {notification && (
-          <motion.div
-            initial={{ opacity: 0, y: -20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className="fixed top-24 left-1/2 -translate-x-1/2 z-50 glass-card px-6 py-3 rounded-2xl text-body-sm font-semibold text-text-primary shadow-elevated"
-          >
-            {notification}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <main className="pt-20 pb-24">
-        <div className="bg-surface-secondary/40 border-b border-border mb-8">
-          <div className="section-container py-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <p className="section-label mb-2">العروض</p>
-              <h1 className="text-h1 md:text-display text-text-primary font-heading">
-                كل <span className="text-gradient-primary">العروض</span>
+      <main className="relative z-10 pt-20 pb-24">
+        {/* Page header */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 pt-8 sm:pt-12 mb-8">
+          <div className="flex items-start gap-4">
+            <div
+              aria-hidden="true"
+              className="w-1 rounded-full mt-2 origin-top hidden sm:block"
+              style={{
+                height: '52px',
+                background: `linear-gradient(180deg, ${BRAND_HEX} 0%, rgba(55,215,172,0.1) 70%, transparent 100%)`,
+                boxShadow: '0 0 10px rgba(55,215,172,0.2)',
+              }}
+            />
+            <div>
+              <span
+                className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-[0.15em] uppercase px-2.5 py-1 rounded-full mb-2.5"
+                style={{
+                  background: 'rgba(55,215,172,0.07)',
+                  color: BRAND_HEX,
+                  border: '1px solid rgba(55,215,172,0.18)',
+                }}
+              >
+                Exclusive Offers
+              </span>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
+                عروض{' '}
+                <span style={{ color: BRAND_HEX }} className="relative">
+                  أبو كرتونة
+                  <span
+                    aria-hidden="true"
+                    className="absolute left-0 right-0 bottom-[-5px] h-[3px] rounded-full"
+                    style={{ background: `linear-gradient(90deg, ${BRAND_HEX}, rgba(55,215,172,0.2), transparent)` }}
+                  />
+                </span>
               </h1>
-            </motion.div>
+              <p className="text-[13px] mt-2 max-w-lg" style={{ color: 'rgba(148,163,184,0.5)', lineHeight: 1.7 }}>
+                خصومات حصرية لفترة محدودة — اغتنم الفرصة الآن قبل انتهاء الكمية
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="section-container">
+        {/* Gradient separator */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 mb-10">
+          <div className="w-full h-px overflow-hidden">
+            <div
+              className="w-full h-full"
+              style={{
+                background: 'linear-gradient(90deg, transparent, rgba(55,215,172,0.2) 50%, transparent)',
+                animation: 'shimmer-sweep 3s ease-in-out infinite',
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Products grid */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 pb-24">
           {loading ? (
-            <div className="grid gap-4 md:gap-6 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="card rounded-2xl overflow-hidden">
-                  <div className="shimmer w-full aspect-[4/3]" />
+                <div
+                  key={i}
+                  className="rounded-2xl overflow-hidden"
+                  style={{
+                    background: 'rgba(14,22,35,0.6)',
+                    border: '1px solid rgba(255,255,255,0.05)',
+                  }}
+                >
+                  <div className="w-full aspect-[4/3]" style={{ background: 'linear-gradient(135deg, #0d1420, #141e2e)' }} />
                   <div className="p-4 space-y-3">
-                    <div className="shimmer h-3 w-20 rounded-md" />
-                    <div className="shimmer h-5 w-full rounded-md" />
-                    <div className="shimmer h-5 w-3/4 rounded-md" />
-                    <div className="flex justify-between pt-2">
-                      <div className="shimmer h-6 w-24 rounded-md" />
-                      <div className="shimmer h-4 w-12 rounded-md" />
-                    </div>
-                    <div className="shimmer h-11 w-full rounded-xl" />
+                    <div className="h-3 w-20 rounded-md animate-pulse" style={{ background: 'rgba(255,255,255,0.04)' }} />
+                    <div className="h-4 w-full rounded-md animate-pulse" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                    <div className="h-4 w-3/4 rounded-md animate-pulse" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                    <div className="h-10 w-full rounded-xl mt-2" style={{ background: 'rgba(55,215,172,0.06)' }} />
                   </div>
                 </div>
               ))}
             </div>
           ) : products.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="p-8 rounded-3xl glass-card text-center"
-            >
-              <div className="w-16 h-16 rounded-2xl bg-surface-tertiary flex items-center justify-center mx-auto mb-4">
-                <Icon name="InboxIcon" size={28} className="text-text-muted" />
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center mb-5"
+                style={{
+                  background: 'rgba(55,215,172,0.06)',
+                  border: '1px solid rgba(55,215,172,0.12)',
+                }}
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={BRAND_HEX} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                  <line x1="7" y1="7" x2="7.01" y2="7"/>
+                </svg>
               </div>
-              <p className="text-h3 font-bold text-text-secondary">لا توجد عروض حالياً</p>
-              <p className="text-body-sm text-text-muted mt-2">
-                تفقد لاحقاً للحصول على أحدث العروض
+              <p className="text-[14px] font-bold text-white/50 mb-2">لا توجد عروض حالياً</p>
+              <p className="text-[12px] mb-6" style={{ color: 'rgba(148,163,184,0.4)' }}>
+                تابعنا باستمرار للحصول على أحدث العروض والخصومات
               </p>
-            </motion.div>
+              <Link
+                href="/products"
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-[13px] font-bold transition-all duration-200 hover:scale-105 active:scale-95"
+                style={{
+                  background: 'rgba(55,215,172,0.1)',
+                  color: BRAND_HEX,
+                  border: '1px solid rgba(55,215,172,0.22)',
+                }}
+              >
+                تصفح المنتجات
+              </Link>
+            </div>
           ) : (
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
-            >
-              {products.map((p) => (
-                <motion.div key={p.id} variants={itemVariants}>
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {products.map((product, index) => (
+                <div
+                  key={product.id}
+                  className="product-card-enter"
+                  style={{
+                    animationDelay: `${index * 0.07}s`,
+                    animationDuration: '0.45s',
+                    animationTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+                    animationFillMode: 'both',
+                  }}
+                >
                   <ProductCard
-                    product={p}
-                    onAddToCart={handleAddToCart}
-                    onAddToDrive={handleAddToDrive}
-                    hasDrive={storageInfo.hasDrive}
+                    product={product}
+                    onAddToCart={() => addToCart(product)}
+                    onAddToDrive={() => addToDrive(product)}
+                    hasDrive={product.type === 'data' || product.type === 'storage'}
                   />
-                </motion.div>
+                </div>
               ))}
-            </motion.div>
+            </div>
           )}
         </div>
       </main>
+
       <Footer />
       <WhatsAppButton />
     </div>

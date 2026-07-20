@@ -14,21 +14,12 @@
     --font-readex: 'Readex Pro', sans-serif;
   }
 
-  * {
-    @apply border-border;
-  }
-
   body {
     @apply bg-base text-text-primary font-readex antialiased;
-    background-image:
-      radial-gradient(circle at 20% 80%, rgba(55, 215, 172, 0.05) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(55, 215, 172, 0.03) 0%, transparent 50%),
-      radial-gradient(circle at 40% 40%, rgba(55, 215, 172, 0.02) 0%, transparent 50%);
     overflow-x: hidden;
   }
 
   html {
-    scroll-behavior: smooth;
     overflow-x: hidden;
   }
 
@@ -170,11 +161,11 @@
   }
 
   .badge-new {
-    @apply bg-brand text-white animate-pulse-soft;
+    @apply bg-brand text-white;
   }
 
   .badge-hot {
-    @apply bg-red-500 text-white animate-pulse-soft;
+    @apply bg-red-500 text-white;
   }
 
   /* Sections */
@@ -394,21 +385,38 @@
 
   /* Reduce motion for accessibility */
   @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
+    *, *::before, *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
   }
 
-  /* Mobile performance: disable complex effects on low-power devices */
-  @media (prefers-reduced-motion: reduce) or (hover: none) {
-    .mobile-simplify {
-      backdrop-filter: none !important;
-      transform: none !important;
-      box-shadow: none !important;
-    }
+  /* GPU-accelerated CSS animations (replaces JS/Framer Motion where possible) */
+  @keyframes ambient-float {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-20px) scale(1.05); }
+  }
+
+  @keyframes shimmer-sweep {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .product-card-enter {
+    opacity: 0;
+    animation-name: fade-up;
+    animation-fill-mode: both;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes slow-ping {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
   }
 }

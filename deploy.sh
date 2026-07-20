@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Abu Kartona Deployment Script
+# AboCartona Deployment Script
 # This script helps deploy the application to different platforms
 
 set -e
 
-echo "🚀 Abu Kartona Deployment Script"
+echo "🚀 AboCartona Deployment Script"
 echo "=================================="
 
 # Check if we're in the right directory

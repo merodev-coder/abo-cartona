@@ -11,6 +11,11 @@ import WhatsAppButton from '@/components/WhatsAppButton';
 import { useSearchParams } from 'next/navigation';
 import { useStore, type Product, type Tag } from '@/store/useStore';
 import { ThemedSelect } from '@/components/ui/ThemedSelect';
+import Link from 'next/link';
+
+const BRAND = '#37D7AC';
+const BRAND_RGB = '55, 215, 172';
+const BG = '#080C14';
 
 export const dynamic = 'force-dynamic';
 
@@ -218,7 +223,7 @@ function ProductsContent() {
   }, [products, sortBy, filters.searchQuery, filters.category, filters.tags, filters.priceRange]);
 
   return (
-    <div className="min-h-screen bg-base">
+    <div className="min-h-screen" style={{ background: '#080C14' }}>
       <Header />
 
       <AnimatePresence mode="wait">
@@ -413,7 +418,7 @@ export default memo(function ProductsPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-base flex items-center justify-center">
+        <div className="min-h-screen flex items-center justify-center" style={{ background: '#080C14' }}>
           <div className="w-10 h-10 border-3 border-brand/30 border-t-brand rounded-full animate-spin" />
         </div>
       }

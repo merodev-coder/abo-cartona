@@ -12,13 +12,14 @@ export default function SmoothScrollWrapper({ children }: { children: React.Reac
 
   useEffect(() => {
     const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      duration: 1.4,
+      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: 'vertical',
       gestureOrientation: 'vertical',
       smoothWheel: true,
-      wheelMultiplier: 1,
-      touchMultiplier: 2,
+      wheelMultiplier: 0.85,
+      touchMultiplier: 1.8,
+      normalizeWheel: false,
     });
 
     lenisRef.current = lenis;

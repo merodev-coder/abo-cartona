@@ -1,6 +1,6 @@
-# Abu Kartona Deployment Guide
+# AboCartona Deployment Guide
 
-This guide will help you deploy the Abu Kartona e-commerce application to various platforms.
+This guide will help you deploy the AboCartona e-commerce application to various platforms.
 
 ## 🚀 Quick Deploy Options
 
@@ -186,4 +186,4 @@ For deployment issues:
 
 ---
 
-**🎉 Your Abu Kartona application is now ready for production deployment!**
+**🎉 Your AboCartona application is now ready for production deployment!**

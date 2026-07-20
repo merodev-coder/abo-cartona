@@ -34,7 +34,7 @@ async function testEmailService() {
     const testMail = {
       from: `"Test" <${process.env.SMTP_USER}>`,
       to: process.env.SMTP_USER, // Send to yourself for testing
-      subject: 'Test Email from Abu Kartona',
+      subject: 'Test Email from AboCartona',
       html: '<h1>Test Successful!</h1><p>Your email service is working correctly.</p>'
     };
     

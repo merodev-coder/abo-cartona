@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 const paginationSchema = z.object({
   page: z.string().default('1').transform(Number).pipe(z.number().min(1)),
-  limit: z.string().default('20').transform(Number).pipe(z.number().min(1).max(100)),
+  limit: z.string().default('100').transform(Number).pipe(z.number().min(1).max(100)),
   category: z.string().optional(),
   subtype: z.string().optional(),
   search: z.string().optional(),

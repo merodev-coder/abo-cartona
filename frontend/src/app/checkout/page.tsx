@@ -293,8 +293,36 @@ export default function CheckoutPage() {
     }
   };
 
+  const BRAND = '#37D7AC';
+  const BRAND_RGB = '55, 215, 172';
+
   return (
-    <div className="min-h-screen bg-surface flex flex-col" dir="rtl">
+    <div className="min-h-screen flex flex-col" dir="rtl" style={{ background: '#080C14' }}>
+      {/* Ambient background */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <motion.div
+          className="absolute rounded-full"
+          style={{
+            top: '15%', right: '10%',
+            width: 'clamp(250px, 30vw, 400px)', height: 'clamp(250px, 30vw, 400px)',
+            background: `radial-gradient(circle, rgba(${BRAND_RGB},0.04) 0%, transparent 70%)`,
+            filter: 'blur(60px)',
+          }}
+          animate={{ y: [0, -14, 0], scale: [1, 1.04, 1] }}
+          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            opacity: 0.018,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+          }}
+        />
+      </div>
+
+      {/* Top gradient line */}
+      <div className="fixed top-0 left-0 right-0 h-px z-50" style={{ background: `linear-gradient(90deg, transparent, rgba(${BRAND_RGB},0.25) 50%, transparent)` }} />
+
       <Header />
 
       <main className="flex-1 pt-20 pb-16">

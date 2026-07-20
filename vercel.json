@@ -1,6 +1,6 @@
 {
   "env": {
-    "NEXT_PUBLIC_API_BASE_URL": "https://test-qaap.onrender.com",
+    "NEXT_PUBLIC_API_BASE_URL": "https://abo-cartona.onrender.com",
     "MONGODB_URI": "@mongodb_uri",
     "JWT_SECRET": "@jwt_secret"
   }

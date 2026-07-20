@@ -1,0 +1,34 @@
+Act as an elite UI/UX Designer and Senior Frontend Engineer specializing in Apple-style minimalism, fluid mercury ethics, and premium dark-mode aesthetics. We are completely rewriting the Hero section code for an ultra-premium PC hardware platform named "AboCartona" (أبو كرتونة). 
+
+Instead of traditional, boxy grids or basic cards, create an immersive, fluid layout built with Tailwind CSS, React, and Lucide icons that feels cohesive, organic, and incredibly high-end.
+
+### 1. Design & Aesthetic Requirements
+- **Background & Lighting:** A deep, obsidian-dark background with a smooth, floating ambient light orb (emerald/mint) casting a soft glow.
+- **Glassmorphism:** Use seamless, borderless container sections leveraging heavy `backdrop-blur-xl`, subtle gradients, and microscopic 1px translucent borders to feel like solid liquid glass.
+- **Typography:** Implement a premium, high-end geometric Arabic font family (like IBM Plex Sans Arabic or Cairo) with strict visual hierarchy and generous line heights. Completely omit all trailing periods and commas from titles, badges, and micro-copy.
+
+### 2. Layout & Structure Refinement
+Ditch the standard card grid for a more continuous, asymmetric visual flow:
+- **Hero Header Section:** - An elite, minimalist top badge: "منصة الأداء الفائق والعتاد المتقدم"
+  - High-impact main title with a striking accent weight: "امتلك القوة الكاملة لأقصى أداء ممكن"
+  - Premium, descriptive paragraph targeting hardware enthusiasts: "وجهتك الأولى لترقية حاسوبك. وحدات تخزين فائقة السرعة، وذاكرة عشوائية عالية الكثافة، وهندسة أداء مصممة خصيصًا للمحترفين واللاعبين"
+  - A sleek, floating CTA button: "تسوق القطع الآن" with an animated arrow.
+
+- **Hardware Showcase Flow (Seamless Categories):**
+  Integrate the platform's core categories into an elegant, interconnected layout where content breathes natively:
+  - *Laptop Upgrades:* "ترقيات المحمول • حلول متكاملة لأجهزة الـ Laptop" (Include an "الأكثر مبيعًا" pill indicator)
+  - *NVMe SSD:* "وحدات NVMe SSD • سرعات نقل تصل إلى 7000MB/s"
+  - *SATA & HDD:* "وحدات التخزين • سعات ضخمة تصل إلى 4TB"
+  - *Memory:* "ذاكرة DDR4 / DDR5 • سعات تشغيل تصل إلى 64GB"
+  - *Global Explorer:* An integrated, borderless transition link for "كل القطع"
+
+- **Footer Metrics:** A clean, horizontal row of perfectly aligned trust badges:
+  - 100% قطع أصلية
+  - 24/7 دعم متواصل
+  - +5K عميل سعيد
+  - توصيل للمحافظات
+
+### 3. Code Generation Rules
+- Provide the complete, production-ready React component with Tailwind CSS classes.
+- Ensure all text alignment truncation bugs (like the original cutoff on "اللابتوبات") are entirely resolved through fluid spacing.
+- Strictly do not include any code comments, annotations, or punctuation placeholders in the final component.

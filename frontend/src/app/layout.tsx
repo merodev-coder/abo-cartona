@@ -5,6 +5,7 @@ import '../styles/globals.css';
 import Providers from './providers';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import SmoothScrollWrapper from '@/components/SmoothScrollWrapper';
+import CustomCursor from '@/components/ui/CustomCursor';
 
 const readexPro = Readex_Pro({
   subsets: ['arabic', 'latin'],
@@ -30,14 +31,14 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL('https://abocartona.com'),
   title: {
-    default: 'أبو كرتونة | Abu Kartona - متجر الهاردوير في مصر',
+    default: 'أبو كرتونة | AboCartona - متجر الهاردوير في مصر',
     template: '%s | أبو كرتونة'
   },
   description: 'أبو كرتونة - متجر متخصص في قطع الكمبيوتر والهاردوير بأفضل الأسعار في مصر. لابتوبات، SSD، HDD، رامات، إكسسوارات gaming. توصيل لجميع المحافظات.',
-  keywords: ['أبو كرتونة', 'Abu Kartona', 'هاردوير مصر', 'كمبيوتر جيمينج', 'SSD', 'RAM', 'بكجات تخزين', 'PC Hardware Egypt', 'Gaming PCs', 'Hardware Store Egypt', 'Laptop Egypt', 'أبو كرتونة', 'متجر هاردوير', 'قطاعات كمبيوتر'],
-  authors: [{ name: 'Abu Kartona' }],
-  creator: 'Abu Kartona',
-  publisher: 'Abu Kartona',
+  keywords: ['أبو كرتونة', 'AboCartona', 'هاردوير مصر', 'كمبيوتر جيمينج', 'SSD', 'RAM', 'بكجات تخزين', 'PC Hardware Egypt', 'Gaming PCs', 'Hardware Store Egypt', 'Laptop Egypt', 'أبو كرتونة', 'متجر هاردوير', 'قطاعات كمبيوتر'],
+  authors: [{ name: 'AboCartona' }],
+  creator: 'AboCartona',
+  publisher: 'AboCartona',
   formatDetection: {
     email: false,
     address: false,
