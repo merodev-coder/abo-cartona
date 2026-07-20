@@ -77,7 +77,7 @@ export function ThemedSelect({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.95 }}
             transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute z-[9999] w-full mt-2 py-2 bg-surface-secondary rounded-xl border border-border shadow-elevated overflow-hidden"
+            className="absolute z-[100] w-full mt-2 py-2 bg-[#0B0F19] rounded-xl border border-slate-800 shadow-xl overflow-hidden backdrop-blur-none"
           >
             <div className="max-h-60 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
               {options.map((option, index) => (
@@ -190,7 +190,7 @@ export function ThemedMultiSelect({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.95 }}
             transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute z-[9999] w-full mt-2 py-2 bg-surface-secondary rounded-xl border border-border shadow-elevated overflow-hidden"
+            className="absolute z-[100] w-full mt-2 py-2 bg-[#0B0F19] rounded-xl border border-slate-800 shadow-xl overflow-hidden backdrop-blur-none"
           >
             <div className="max-h-60 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
               {options.map((option, index) => {

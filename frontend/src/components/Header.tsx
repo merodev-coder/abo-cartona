@@ -240,8 +240,8 @@ export default function Header() {
             relative flex items-center justify-between overflow-visible
             ${
               scrolled
-                ? 'bg-[#0B0F19]/92 border border-white/10 shadow-lg'
-                : 'bg-transparent border-b border-white/5'
+                ? 'bg-[#0B0F19] border border-white/10 shadow-lg'
+                : 'bg-[#0B0F19]/95 border-b border-white/5'
             }
           `}
           >

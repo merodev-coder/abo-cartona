@@ -172,7 +172,7 @@ const HeroSection = memo(function HeroSection() {
                 textRendering: 'optimizeLegibility',
               }}
             >
-              <span className="block text-white">فول التجميعة.. واقفل اللعبة!</span>
+              <span className="block text-white">فول التجميعة.. وقفل اللعبة!</span>
               <span
                 className="block mt-2 hero-gradient-text"
                 style={{
