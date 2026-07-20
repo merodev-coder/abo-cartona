@@ -20,6 +20,7 @@ interface AppImageProps {
   onClick?: () => void;
   fallbackSrc?: string;
   loading?: 'lazy' | 'eager';
+  decoding?: 'async' | 'sync' | 'auto';
   unoptimized?: boolean;
   format?: 'webp' | 'avif' | 'auto';
   [key: string]: unknown;
@@ -40,6 +41,7 @@ const AppImage = memo(function AppImage({
   onClick,
   fallbackSrc = PRODUCT_IMAGE_FALLBACK,
   loading = 'lazy',
+  decoding = 'async',
   unoptimized = false,
   format = 'webp',
   ...props

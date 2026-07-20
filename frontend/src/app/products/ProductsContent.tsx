@@ -2,16 +2,26 @@
 
 import React, { Suspense, useEffect, useMemo, useRef, useState, useCallback, memo } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
+import nextDynamic from 'next/dynamic';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import ProductFilters from './components/ProductFilters';
-import ProductCard from '@/components/ProductCard';
+import LazyProductGrid from '@/components/LazyProductGrid';
 import Icon from '@/components/ui/AppIcon';
 import WhatsAppButton from '@/components/WhatsAppButton';
 import { useSearchParams } from 'next/navigation';
 import { useStore, type Product, type Tag } from '@/store/useStore';
 import { ThemedSelect } from '@/components/ui/ThemedSelect';
 import Link from 'next/link';
+
+// Dynamic import for Footer with loading skeleton
+const Footer = nextDynamic(() => import('@/components/Footer'), {
+  loading: () => (
+    <footer className="h-64 bg-[#080C14]" aria-hidden="true">
+      <div className="animate-pulse h-full w-full bg-surface-tertiary/20" />
+    </footer>
+  ),
+  ssr: false,
+});
 
 const BRAND = '#37D7AC';
 const BRAND_RGB = '55, 215, 172';
@@ -379,29 +389,16 @@ function ProductsContent() {
                   </button>
                 </motion.div>
               ) : (
-                /* Product Grid - simplified AnimatePresence */
-                <motion.div
-                  key={`${activeTab}-${filters.category}-${filters.searchQuery}`}
-                  variants={containerVariants}
-                  initial="hidden"
-                  animate="visible"
-                  className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                >
-                  {filteredProducts.map((product) => (
-                    <motion.div
-                      key={product.id}
-                      variants={itemVariants}
-                      className="will-change-transform"
-                    >
-                      <ProductCard
-                        product={product}
-                        onAddToCart={handleAddToCart}
-                        onAddToDrive={handleAddToDrive}
-                        hasDrive={storage.hasDrive}
-                      />
-                    </motion.div>
-                  ))}
-                </motion.div>
+                /* Product Grid with Lazy Loading */
+                <LazyProductGrid
+                  items={filteredProducts}
+                  onAddToCart={handleAddToCart}
+                  onAddToDrive={handleAddToDrive}
+                  hasDrive={storage.hasDrive}
+                  columns={4}
+                  forceLazy={true}
+                  eagerCount={4}
+                />
               )}
             </div>
           </div>

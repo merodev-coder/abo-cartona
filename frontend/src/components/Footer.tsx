@@ -1,13 +1,17 @@
 'use client';
 
-import React, { memo, useState, useRef } from 'react';
+import React, { memo, useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFacebookF, faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import AppLogo from '@/components/ui/AppLogo';
 import Icon from '@/components/ui/AppIcon';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import TermsOfServiceModal from './TermsOfServiceModal';
+
+// Dynamic import for modal since it's only shown on user interaction
+const TermsOfServiceModal = dynamic(() => import('./TermsOfServiceModal'), {
+  ssr: false,
+});
 
 const BRAND = '#37D7AC';
 const BRAND_RGB = '55, 215, 172';
@@ -53,18 +57,11 @@ const socialLinks = [
 
 const Footer = memo(function Footer() {
   const [isTermsOpen, setIsTermsOpen] = useState(false);
-  const footerRef = useRef<HTMLDivElement>(null);
 
   return (
-    <footer
-      ref={footerRef}
-      className="relative overflow-hidden"
-      style={{ background: BG }}
-    >
-      {/* ── Ambient background effects ───────────────────────────── */}
+    <footer className="relative overflow-hidden" style={{ background: BG }}>
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-        {/* Ambient glow orbs */}
-        <motion.div
+        <div
           className="absolute rounded-full"
           style={{
             top: '-8%',
@@ -72,12 +69,9 @@ const Footer = memo(function Footer() {
             width: 'clamp(300px, 35vw, 500px)',
             height: 'clamp(300px, 35vw, 500px)',
             background: `radial-gradient(circle, rgba(${BRAND_RGB},0.05) 0%, transparent 70%)`,
-            filter: 'blur(70px)',
           }}
-          animate={{ y: [0, -15, 0], scale: [1, 1.05, 1] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
         />
-        <motion.div
+        <div
           className="absolute rounded-full"
           style={{
             bottom: '5%',
@@ -85,22 +79,8 @@ const Footer = memo(function Footer() {
             width: 'clamp(250px, 30vw, 420px)',
             height: 'clamp(250px, 30vw, 420px)',
             background: `radial-gradient(circle, rgba(${BRAND_RGB},0.04) 0%, transparent 70%)`,
-            filter: 'blur(60px)',
-          }}
-          animate={{ y: [0, 12, 0], scale: [1, 1.04, 1] }}
-          transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-        />
-
-        {/* Noise texture */}
-        <div
-          className="absolute inset-0"
-          style={{
-            opacity: 0.02,
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
           }}
         />
-
-        {/* Top gradient separator */}
         <div className="absolute top-0 left-0 right-0 h-px">
           <div
             className="w-full h-full"

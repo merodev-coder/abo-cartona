@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useCallback, useState, useEffect } from 'react';
+import React, { useRef, useCallback, useState, useEffect, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/AppIcon';
 import type { Product } from '@/store/useStore';
@@ -20,7 +20,7 @@ interface ProductCardProps {
   hasDrive?: boolean;
 }
 
-export default function ProductCard({
+function ProductCard({
   product,
   onAddToCart,
   onAddToDrive,
@@ -211,6 +211,9 @@ export default function ProductCard({
                 fill
                 className="object-cover transition-all duration-700 ease-out group-hover:scale-105 group-hover:brightness-110 z-[2]"
                 sizes="(max-width: 768px) 50vw, 25vw"
+                priority={false}
+                loading="lazy"
+                decoding="async"
               />
 
               {/* Bottom fade */}
@@ -615,3 +618,5 @@ const StyledWrapper = styled.div`
     }
   }
 `;
+
+export default memo(ProductCard);

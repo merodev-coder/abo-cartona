@@ -86,6 +86,90 @@ export function Skeleton({
   );
 }
 
+// ─── Ultra-light product card placeholder (lazy mount) ───────────────────────
+
+export function ProductCardSkeletonLite() {
+  return (
+    <div
+      className="rounded-2xl overflow-hidden border border-white/5 bg-white/[0.02] h-full"
+      aria-hidden
+    >
+      <div className="aspect-[4/3] w-full bg-white/[0.04] animate-pulse" />
+      <div className="p-4 space-y-2.5">
+        <div className="h-2.5 w-1/4 rounded bg-white/[0.04] animate-pulse" />
+        <div className="h-4 w-full rounded bg-white/[0.04] animate-pulse" />
+        <div className="h-4 w-2/3 rounded bg-white/[0.04] animate-pulse" />
+        <div className="pt-3 flex items-center justify-between">
+          <div className="h-5 w-16 rounded bg-white/[0.04] animate-pulse" />
+          <div className="h-10 w-10 rounded-xl bg-white/[0.04] animate-pulse" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Below-the-fold section placeholder ────────────────────────────────────────
+
+export function ProductSectionSkeleton({ count = 4 }: { count?: number }) {
+  return (
+    <div className="space-y-8" aria-hidden>
+      <div className="space-y-3">
+        <div className="h-3 w-28 rounded-full bg-white/[0.04] animate-pulse" />
+        <div className="h-10 w-2/3 max-w-md rounded-lg bg-white/[0.04] animate-pulse" />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
+        {Array.from({ length: count }).map((_, i) => (
+          <ProductCardSkeletonLite key={i} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function FooterSkeleton() {
+  return (
+    <footer
+      className="border-t border-white/5 bg-[#080C14] py-16"
+      aria-hidden
+      style={{ minHeight: '280px' }}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="space-y-3">
+              <div className="h-4 w-20 rounded bg-white/[0.04] animate-pulse" />
+              <div className="h-3 w-full rounded bg-white/[0.03] animate-pulse" />
+              <div className="h-3 w-4/5 rounded bg-white/[0.03] animate-pulse" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+export function CarouselSkeleton() {
+  return (
+    <div className="space-y-4" aria-hidden>
+      <div className="h-8 w-48 rounded-lg bg-white/[0.04] animate-pulse" />
+      <div className="flex gap-4 overflow-hidden">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="flex-shrink-0 w-[220px] rounded-2xl border border-white/5 overflow-hidden"
+          >
+            <div className="aspect-[4/3] bg-white/[0.04] animate-pulse" />
+            <div className="p-3 space-y-2">
+              <div className="h-3 w-full rounded bg-white/[0.04] animate-pulse" />
+              <div className="h-4 w-1/2 rounded bg-white/[0.04] animate-pulse" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Product Card Skeleton ───────────────────────────────────────────────────
 
 export function ProductCardSkeleton({ delay = 0 }: { delay?: number }) {

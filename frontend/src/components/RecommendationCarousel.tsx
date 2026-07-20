@@ -58,6 +58,9 @@ const ProductCard = React.memo(function ProductCard({ product, index }: ProductC
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"
               sizes="280px"
+              priority={false}
+              loading="lazy"
+              decoding="async"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">

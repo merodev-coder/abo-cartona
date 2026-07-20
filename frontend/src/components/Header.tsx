@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion';
 import AppLogo from '@/components/ui/AppLogo';
@@ -166,14 +166,21 @@ export default function Header() {
   const { cartItems } = useStore();
   const cartCount = cartItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
 
-  const handleScroll = useCallback(() => {
-    setScrolled(window.scrollY > 30);
-  }, []);
-
   useEffect(() => {
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [handleScroll]);
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        setScrolled(window.scrollY > 30);
+        ticking = false;
+      });
+    };
+
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? 'hidden' : '';
@@ -233,7 +240,7 @@ export default function Header() {
             relative flex items-center justify-between overflow-visible
             ${
               scrolled
-                ? 'bg-base/90 backdrop-blur-2xl border border-white/10'
+                ? 'bg-[#0B0F19]/92 border border-white/10 shadow-lg'
                 : 'bg-transparent border-b border-white/5'
             }
           `}
@@ -309,7 +316,7 @@ export default function Header() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -6, scale: 0.98 }}
                   transition={{ type: 'spring', stiffness: 320, damping: 30 }}
-                  className="absolute top-full left-0 right-0 mt-3 mx-2 sm:mx-4 bg-surface-card/95 backdrop-blur-[32px] border border-white/10 rounded-2xl overflow-hidden md:hidden shadow-2xl max-w-[calc(100vw-16px)] box-border"
+                  className="absolute top-full left-0 right-0 mt-3 mx-2 sm:mx-4 bg-[#0B0F19]/95 border border-white/10 rounded-2xl overflow-hidden md:hidden shadow-2xl max-w-[calc(100vw-16px)] box-border"
                 >
                   <div className="absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-glass-border to-transparent" />
 
