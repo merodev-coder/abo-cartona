@@ -11,6 +11,7 @@ import { isFreeWithHardware } from '@/lib/freeContentUtils';
 import CustomDropdown from '@/components/ui/CustomDropdown';
 import styled from 'styled-components';
 import { useStore } from '@/store/useStore';
+import { getProductHref, resolveProductImageSrc } from '@/lib/productUtils';
 
 interface ProductCardProps {
   product: Product;
@@ -60,7 +61,7 @@ export default function ProductCard({
     const destRect = cartIcon.getBoundingClientRect();
 
     const clone = document.createElement('div');
-    const imgSrc = product.images?.[0] || product.image || '/placeholder.png';
+    const imgSrc = resolveProductImageSrc(product.images?.[0] || product.image);
     clone.innerHTML = `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;" />`;
 
     Object.assign(clone.style, {
@@ -205,7 +206,7 @@ export default function ProductCard({
               />
 
               <AppImage
-                src={product.images?.[0] || product.image || '/placeholder.png'}
+                src={resolveProductImageSrc(product.images?.[0] || product.image)}
                 alt={product.name}
                 fill
                 className="object-cover transition-all duration-700 ease-out group-hover:scale-105 group-hover:brightness-110 z-[2]"

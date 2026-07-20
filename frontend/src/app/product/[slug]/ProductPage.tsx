@@ -7,6 +7,7 @@ import AppImage from '@/components/ui/AppImage';
 import Icon from '@/components/ui/AppIcon';
 import { useStore, type Product } from '@/store/useStore';
 import { isFreeWithHardware } from '@/lib/freeContentUtils';
+import { getProductHref } from '@/lib/productUtils';
 
 // ============================================================================
 // Types & Interfaces
@@ -178,6 +179,11 @@ const ProductGallery = memo(function ProductGallery({ images, name }: ProductGal
   const [activeIdx, setActiveIdx] = useState(0);
   const [zoomed, setZoomed] = useState(false);
   const mainImage = images[activeIdx] || '';
+
+  useEffect(() => {
+    setActiveIdx(0);
+    setZoomed(false);
+  }, [images, name]);
 
   if (!images.length) {
     return (
@@ -729,7 +735,7 @@ const RelatedProducts = memo(function RelatedProducts({
               whileHover={{ y: -4, transition: { duration: 0.2 } }}
               className="flex-shrink-0 w-56"
             >
-              <Link href={`/product/${product.slug}`} className="block group" draggable={false}>
+              <Link href={getProductHref(product)} className="block group" draggable={false}>
                 <div className="bg-surface bg-surface-secondary rounded-2xl overflow-hidden border border-border border-border shadow-card hover:shadow-card-hover transition-all duration-300">
                   <div className="relative h-48 overflow-hidden bg-surface-secondary bg-surface-tertiary">
                     {product.images?.[0] ? (
@@ -795,6 +801,13 @@ export default function ProductPage({ product, relatedProducts, categoryLabel }:
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setSelectedBrand('');
+    setQuantity(1);
+    setAddedToCart(false);
+    setLoading(false);
+  }, [product.id]);
 
   const inStock = product.stockCount > 0;
   const isFreeContent = isFreeWithHardware(product.type, product.subtype);
@@ -919,7 +932,7 @@ export default function ProductPage({ product, relatedProducts, categoryLabel }:
 
           {/* Right Side — Gallery */}
           <div className="order-1 lg:order-2">
-            <ProductGallery images={product.images || []} name={product.name} />
+            <ProductGallery key={product.id} images={product.images || []} name={product.name} />
           </div>
         </div>
 

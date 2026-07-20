@@ -1,8 +1,9 @@
 'use client';
 
 /* eslint-disable jsx-a11y/alt-text */
-import React, { useState, useCallback, useMemo, memo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, memo } from 'react';
 import Image, { type ImageProps } from 'next/image';
+import { PRODUCT_IMAGE_FALLBACK, resolveProductImageSrc } from '@/lib/productUtils';
 
 interface AppImageProps {
   src: string;
@@ -37,25 +38,38 @@ const AppImage = memo(function AppImage({
   fill = false,
   sizes,
   onClick,
-  fallbackSrc = '/assets/images/no_image.png',
+  fallbackSrc = PRODUCT_IMAGE_FALLBACK,
   loading = 'lazy',
   unoptimized = false,
   format = 'webp',
   ...props
 }: AppImageProps) {
-  const [imageSrc, setImageSrc] = useState(src);
+  const resolvedFallback = resolveProductImageSrc(fallbackSrc, PRODUCT_IMAGE_FALLBACK);
+  const normalizedSrc = resolveProductImageSrc(src, resolvedFallback);
+
+  const [imageSrc, setImageSrc] = useState(normalizedSrc);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setImageSrc(resolveProductImageSrc(src, resolvedFallback));
+    setHasError(false);
+    setIsLoading(true);
+  }, [src, resolvedFallback]);
 
   const isExternalUrl = useMemo(
     () => typeof imageSrc === 'string' && imageSrc.startsWith('http'),
     [imageSrc]
   );
-  const resolvedUnoptimized = unoptimized || isExternalUrl;
+  const isDataUri = useMemo(
+    () => typeof imageSrc === 'string' && imageSrc.startsWith('data:'),
+    [imageSrc]
+  );
+  const resolvedUnoptimized = unoptimized || isExternalUrl || isDataUri;
 
   // Generate optimized src with format parameter
   const optimizedSrc = useMemo(() => {
-    if (isExternalUrl || unoptimized) return imageSrc;
+    if (isExternalUrl || isDataUri || unoptimized) return imageSrc;
 
     // For Next.js Image optimization, add format parameter
     const url = new URL(imageSrc, process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost');
@@ -63,19 +77,23 @@ const AppImage = memo(function AppImage({
       url.searchParams.set('format', format);
     }
     return url.pathname + url.search;
-  }, [imageSrc, isExternalUrl, unoptimized, format]);
+  }, [imageSrc, isExternalUrl, isDataUri, unoptimized, format]);
 
-  const handleError = useCallback(() => {
-    if (!hasError && imageSrc !== fallbackSrc) {
-      setImageSrc(fallbackSrc);
-      setHasError(true);
-    }
-    setIsLoading(false);
-  }, [hasError, imageSrc, fallbackSrc]);
+  const handleError = useCallback(
+    (event: React.SyntheticEvent<HTMLImageElement>) => {
+      event.currentTarget.onerror = null;
+
+      if (!hasError && imageSrc !== resolvedFallback) {
+        setImageSrc(resolvedFallback);
+        setHasError(true);
+      }
+      setIsLoading(false);
+    },
+    [hasError, imageSrc, resolvedFallback]
+  );
 
   const handleLoad = useCallback(() => {
     setIsLoading(false);
-    setHasError(false);
   }, []);
 
   const imageClassName = useMemo(() => {

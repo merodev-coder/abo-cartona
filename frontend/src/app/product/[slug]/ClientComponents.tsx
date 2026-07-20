@@ -7,6 +7,7 @@ import AppImage from '@/components/ui/AppImage';
 import Icon from '@/components/ui/AppIcon';
 import { useStore } from '@/store/useStore';
 import CustomDropdown from '@/components/ui/CustomDropdown';
+import { getProductHref, resolveProductImageSrc } from '@/lib/productUtils';
 
 // ─── Click-to-Zoom Modal ─────────────────────────────────────────────────────
 function ZoomModal({ image, name, onClose }: { image: string; name: string; onClose: () => void }) {
@@ -288,7 +289,7 @@ export function BuyBox({ product }: { product: any }) {
     const destRect = cartIcon.getBoundingClientRect();
 
     const clone = document.createElement('div');
-    const imgSrc = product.images?.[0] || '/placeholder.png';
+    const imgSrc = resolveProductImageSrc(product.images?.[0] || product.image);
     clone.innerHTML = `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" />`;
 
     Object.assign(clone.style, {
@@ -525,7 +526,7 @@ export function RelatedCarousel({ products }: { products: any[] }) {
           {products.map((p) => (
             <Link
               key={p.id}
-              href={`/product/${p.slug}`}
+              href={getProductHref(p)}
               className="flex-shrink-0 w-56 product-card group block"
               draggable={false}
             >

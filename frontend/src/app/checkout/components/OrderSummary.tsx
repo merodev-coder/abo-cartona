@@ -3,6 +3,7 @@
 import React from 'react';
 import Icon from '@/components/ui/AppIcon';
 import AppImage from '@/components/ui/AppImage';
+import { resolveProductImageSrc } from '@/lib/productUtils';
 
 interface CartItem {
   id: string;
@@ -60,7 +61,7 @@ export default function OrderSummary({
               {item.images?.[0] || item.image ? (
                 <div className="w-8 h-8 rounded-lg bg-surface-tertiary overflow-hidden relative flex-shrink-0">
                   <AppImage
-                    src={item.images?.[0] || item.image || '/placeholder.png'}
+                    src={resolveProductImageSrc(item.images?.[0] || item.image)}
                     alt={item.name}
                     fill
                     className="object-contain p-0.5"

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Icon from '@/components/ui/AppIcon';
 import AppImage from '@/components/ui/AppImage';
 import { Product } from '@/store/useStore';
+import { getProductHref } from '@/lib/productUtils';
 
 // ============================================================================
 // Types & Interfaces
@@ -45,7 +46,7 @@ const ProductCard = React.memo(function ProductCard({ product, index }: ProductC
       className="flex-shrink-0 w-[280px] group transform-gpu will-change-transform"
     >
       <Link
-        href={`/product/${product.slug}`}
+        href={getProductHref(product)}
         className="block bg-surface-secondary rounded-2xl overflow-hidden border border-border hover:border-brand-500/50 dark:hover:border-brand-400/50 transition-all duration-300 hover:shadow-card-hover dark:hover:shadow-card-dark-hover h-full transform-gpu will-change-transform hover:scale-[1.02]"
       >
         {/* Image Container */}

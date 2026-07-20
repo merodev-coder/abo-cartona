@@ -2,6 +2,7 @@
 
 import React from 'react';
 import AppImage from '@/components/ui/AppImage';
+import { resolveProductImageSrc } from '@/lib/productUtils';
 import Icon from '@/components/ui/AppIcon';
 
 interface CartItem {
@@ -56,7 +57,7 @@ export default function CartReview({
                   {item.images?.[0] || item.image ? (
                     <div className="w-14 h-14 rounded-xl bg-surface-tertiary overflow-hidden relative flex-shrink-0">
                       <AppImage
-                        src={item.images?.[0] || item.image || '/placeholder.png'}
+                        src={resolveProductImageSrc(item.images?.[0] || item.image)}
                         alt={item.name}
                         fill
                         className="object-cover"
