@@ -39,49 +39,49 @@ import { createBostaShipment } from '../controllers/adminController.js';
 
 const router = Router();
 
-router.get('/orders', authMiddleware, listOrders);
-router.patch('/orders/:id', authMiddleware, updateOrderStatus);
-router.delete('/orders/:id', authMiddleware, deleteOrder);
-router.post('/orders/ship', authMiddleware, createBostaShipment);
+router.get('/orders', listOrders);
+router.patch('/orders/:id', updateOrderStatus);
+router.delete('/orders/:id', deleteOrder);
+router.post('/orders/ship', createBostaShipment);
 
-router.post('/inventory', authMiddleware, createProduct);
-router.put('/inventory/:id', authMiddleware, updateProduct);
-router.delete('/inventory/:id', authMiddleware, deleteProduct);
+router.post('/inventory', createProduct);
+router.put('/inventory/:id', updateProduct);
+router.delete('/inventory/:id', deleteProduct);
 
 // Products routes (alias for inventory)
-router.get('/products', authMiddleware, listProducts);
-router.post('/products', authMiddleware, createProduct);
-router.put('/products/:id', authMiddleware, updateProduct);
-router.delete('/products/:id', authMiddleware, deleteProduct);
+router.get('/products', listProducts);
+router.post('/products', createProduct);
+router.put('/products/:id', updateProduct);
+router.delete('/products/:id', deleteProduct);
 
 // Brand routes
-router.get('/brands', authMiddleware, listBrands);
-router.post('/brands', authMiddleware, createBrand);
-router.patch('/brands/:id', authMiddleware, updateBrand);
-router.delete('/brands/:id', authMiddleware, deleteBrand);
+router.get('/brands', listBrands);
+router.post('/brands', createBrand);
+router.patch('/brands/:id', updateBrand);
+router.delete('/brands/:id', deleteBrand);
 
 // Shipping Methods
-router.get('/shipping/methods', authMiddleware, listShippingMethods);
-router.post('/shipping/methods', authMiddleware, createShippingMethod);
-router.patch('/shipping/methods/:id', authMiddleware, updateShippingMethod);
-router.delete('/shipping/methods/:id', authMiddleware, deleteShippingMethod);
+router.get('/shipping/methods', listShippingMethods);
+router.post('/shipping/methods', createShippingMethod);
+router.patch('/shipping/methods/:id', updateShippingMethod);
+router.delete('/shipping/methods/:id', deleteShippingMethod);
 
 // Per-method Governorates
-router.post('/shipping/methods/:id/governorates', authMiddleware, addGovernorateToMethod);
-router.patch('/shipping/methods/:id/governorates/:govId', authMiddleware, updateGovernorateInMethod);
-router.delete('/shipping/methods/:id/governorates/:govId', authMiddleware, removeGovernorateFromMethod);
+router.post('/shipping/methods/:id/governorates', addGovernorateToMethod);
+router.patch('/shipping/methods/:id/governorates/:govId', updateGovernorateInMethod);
+router.delete('/shipping/methods/:id/governorates/:govId', removeGovernorateFromMethod);
 
 // Category routes
-router.get('/categories', authMiddleware, listCategories);
-router.post('/categories', authMiddleware, createCategory);
-router.patch('/categories/:id', authMiddleware, updateCategory);
-router.post('/categories/:type/subcategories', authMiddleware, addSubCategory);
-router.delete('/categories/:type/subcategories/:subId', authMiddleware, removeSubCategory);
+router.get('/categories', listCategories);
+router.post('/categories', createCategory);
+router.patch('/categories/:id', updateCategory);
+router.post('/categories/:type/subcategories', addSubCategory);
+router.delete('/categories/:type/subcategories/:subId', removeSubCategory);
 
 // Analytics routes
-router.get('/monthly-performance', authMiddleware, getMonthlyPerformance);
-router.get('/monthly-audit', authMiddleware, getMonthlyAudit);
-router.get('/top-selling', authMiddleware, getTopSellingItems);
-router.get('/orders-export', authMiddleware, getOrdersForExport);
+router.get('/monthly-performance', getMonthlyPerformance);
+router.get('/monthly-audit', getMonthlyAudit);
+router.get('/top-selling', getTopSellingItems);
+router.get('/orders-export', getOrdersForExport);
 
 export default router;
