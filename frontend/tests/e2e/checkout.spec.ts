@@ -106,7 +106,7 @@ async function configurePaymentMethods(page: Page, instaPayConfirmed = true) {
             id: 'vodafone',
             code: 'VODAFONE_CASH',
             name: 'فودافون كاش',
-            destination: '+20 106 795 7449',
+            destination: '+201001975151',
           },
           ...(instaPayConfirmed
             ? [
@@ -114,7 +114,7 @@ async function configurePaymentMethods(page: Page, instaPayConfirmed = true) {
                   id: 'instapay',
                   code: 'INSTAPAY',
                   name: 'إنستاباي',
-                  destination: '+20 106 795 7449',
+                  destination: '+201001975151',
                 },
               ]
             : []),
@@ -531,7 +531,7 @@ test('admin can review pending evidence with a required rejection reason', async
           depositAmountMinor: 10000,
           remainingBalanceMinor: 55000,
           paymentMethod: 'INSTAPAY',
-          paymentDestination: '+20 106 795 7449',
+          paymentDestination: '+201001975151',
           createdAt: new Date().toISOString(),
         },
       },
@@ -539,7 +539,7 @@ test('admin can review pending evidence with a required rejection reason', async
   });
   await page.goto('/admin/orders/AC-qa');
   await expect(page.getByText('إنستاباي', { exact: true })).toBeVisible();
-  await expect(page.getByRole('main').getByText('+20 106 795 7449', { exact: true })).toBeVisible();
+  await expect(page.getByRole('main').getByText('+201001975151', { exact: true })).toBeVisible();
   const reject = page.getByRole('button', { name: 'رفض الإثبات', exact: true });
   await expect(reject).toBeDisabled();
   await page.getByRole('textbox', { name: 'سبب الرفض' }).fill('الصورة غير واضحة');

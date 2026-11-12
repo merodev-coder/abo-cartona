@@ -1,5 +1,5 @@
 // Public receiving details supplied by the store owner; never a payment credential.
-const storePhone = '+20 106 795 7449';
+const storePhone = '+201001975151';
 
 export function paymentMethods() {
   return [

@@ -8,7 +8,7 @@ receiving identifier with clipboard success/failure feedback.
 ## Server configuration
 
 `backend/utils/paymentConfig.js` is the single source for available receiving
-methods. Vodafone Cash defaults to the owner-supplied **+20 106 795 7449**, including
+methods. Vodafone Cash defaults to the owner-supplied **+201001975151**, including
 when an old destination environment variable is empty. Copying the displayed
 number produces **+201067957449**. The number is supplied by the API; it is not
 duplicated in customer components.
@@ -16,9 +16,9 @@ duplicated in customer components.
 Existing environment settings remain supported:
 
 ```dotenv
-PAYMENT_VODAFONE_DESTINATION=+20 106 795 7449
+PAYMENT_VODAFONE_DESTINATION=+201001975151
 PAYMENT_VODAFONE_ENABLED=true
-PAYMENT_INSTAPAY_DESTINATION=+20 106 795 7449
+PAYMENT_INSTAPAY_DESTINATION=+201001975151
 PAYMENT_INSTAPAY_CONFIRMED=true
 ```
 

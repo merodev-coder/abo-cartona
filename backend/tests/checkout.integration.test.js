@@ -581,7 +581,7 @@ test('isolated replica-set checkout and payment lifecycle', { timeout: 600000 },
           await fetch(`${base}/${order.orderID}`, { headers: { Authorization: `Bearer ${admin}` } })
         ).json();
         assert.equal(details.order.paymentMethod, 'VODAFONE_CASH');
-        assert.equal(details.order.paymentDestination, '+20 106 795 7449');
+        assert.equal(details.order.paymentDestination, '+201001975151');
         assert.equal(details.order.depositStatus, 'PENDING_VERIFICATION');
         assert.ok(
           (

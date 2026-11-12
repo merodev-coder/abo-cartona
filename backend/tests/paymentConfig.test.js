@@ -11,7 +11,7 @@ test('owner-confirmed receiving methods use the exact phone and explicit disabli
   const methods = paymentMethods();
   assert.equal(methods.length, 1);
   assert.equal(methods[0].code, 'VODAFONE_CASH');
-  assert.equal(methods[0].destination, '+20 106 795 7449');
+  assert.equal(methods[0].destination, '+201001975151');
   process.env.PAYMENT_INSTAPAY_CONFIRMED = 'true';
   const enabled = paymentMethods();
   assert.equal(enabled.length, 2);
