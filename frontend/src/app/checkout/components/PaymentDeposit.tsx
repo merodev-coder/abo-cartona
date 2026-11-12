@@ -1,8 +1,10 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { getApiUrl } from '@/lib/apiConfig';
-import { checkoutToken, formatEGP } from '@/lib/checkoutSession';
+import { checkoutToken } from '@/lib/checkoutSession';
+import Currency from '@/components/ui/Currency';
+import { UploadCloud } from 'lucide-react';
 import { usePaymentConfig } from '@/hooks/usePaymentConfig';
 
 interface Props {
@@ -29,7 +31,8 @@ export default function DepositPaymentUpload({
   checkout,
   orderID,
 }: Props) {
-  const { data: config, isPending, isError } = usePaymentConfig();
+  const { data: config, isPending, isError, refetch } = usePaymentConfig();
+  const reducedMotion = useReducedMotion();
   const methods = config?.methods || [];
   const loaded = !isPending;
   const maxBytes = config?.maxBytes || 5242880;
@@ -39,8 +42,14 @@ export default function DepositPaymentUpload({
   const [progress, setProgress] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
   const request = useRef<XMLHttpRequest | null>(null);
+  const selectedFile = useRef<File | null>(null);
   const selectedMethod = method || methods[0]?.id || '';
   const active = methods.find((m) => m.id === selectedMethod);
+  const ready =
+    !!active?.destination?.trim() &&
+    config?.configuration?.uploadReady !== false &&
+    !isError &&
+    loaded;
   useEffect(() => () => request.current?.abort(), []);
   useEffect(
     () => () => {
@@ -66,6 +75,8 @@ export default function DepositPaymentUpload({
       return;
     }
     setPreview(URL.createObjectURL(file));
+    selectedFile.current = file;
+    if (!ready) return;
     setProgress(0);
     const xhr = new XMLHttpRequest();
     request.current = xhr;
@@ -76,6 +87,7 @@ export default function DepositPaymentUpload({
       if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100));
     };
     const failed = () => {
+      if (request.current !== xhr) return;
       setProgress(null);
       setError('تعذر رفع الصورة. أعد اختيارها للمحاولة مرة أخرى.');
     };
@@ -83,6 +95,7 @@ export default function DepositPaymentUpload({
     xhr.ontimeout = failed;
     xhr.onabort = () => setProgress(null);
     xhr.onload = () => {
+      if (request.current !== xhr) return;
       setProgress(null);
       try {
         const result: { proofId?: string; error?: string } = JSON.parse(xhr.responseText);
@@ -102,8 +115,15 @@ export default function DepositPaymentUpload({
     xhr.send(body);
   };
   return (
-    <section className="space-y-5" aria-label="إثبات دفع العربون" aria-busy={progress !== null}>
-      <div className="rounded-2xl border border-brand-500/25 bg-brand-500/5 p-5 space-y-2">
+    <motion.section
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: reducedMotion ? 0 : 0.18 }}
+      className="space-y-4"
+      aria-label="إثبات دفع العربون"
+      aria-busy={progress !== null}
+    >
+      <div className="rounded-2xl border border-brand-500/25 bg-brand-500/5 p-4 space-y-2">
         <h3 className="font-semibold text-lg">
           {isPickup ? 'عربون تأكيد الحجز' : 'دفع مصاريف التوصيل'}
         </h3>
@@ -121,50 +141,63 @@ export default function DepositPaymentUpload({
           <p className="text-sm text-text-muted">الحد الأدنى لطلب الاستلام من المحل 100 جنيه.</p>
         )}
       </div>
-      <dl className="grid gap-3 sm:grid-cols-3 rounded-2xl bg-surface-secondary p-4 text-sm">
+      <dl className="grid gap-3 sm:grid-cols-3 rounded-2xl border border-border bg-surface-secondary p-4 text-sm">
         {orderTotal !== undefined && (
-          <div>
+          <div className="flex items-baseline justify-between gap-3 sm:block">
             <dt className="text-text-muted">إجمالي الطلب</dt>
-            <dd className="mt-2 font-semibold">{formatEGP(orderTotal)}</dd>
+            <dd className="mt-1 font-semibold">
+              <Currency value={orderTotal} />
+            </dd>
           </div>
         )}
-        <div>
+        <div className="flex items-baseline justify-between gap-3 sm:block">
           <dt className="text-text-muted">
             {isPickup ? 'قيمة العربون' : 'مصاريف التوصيل المطلوبة'}
           </dt>
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.dd
               key={depositAmount}
-              initial={{ opacity: 0, y: 4 }}
+              initial={{ opacity: 0, y: reducedMotion ? 0 : 4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.16 }}
-              className="mt-2 font-semibold text-brand-500"
+              transition={{ duration: reducedMotion ? 0 : 0.16 }}
+              className="sm:mt-2 font-semibold text-brand-500"
             >
-              {formatEGP(depositAmount)}
+              <Currency value={depositAmount} />
             </motion.dd>
           </AnimatePresence>
         </div>
         {orderTotal !== undefined && (
-          <div>
+          <div className="flex items-baseline justify-between gap-3 sm:block">
             <dt className="text-text-muted">المتبقي بعد تأكيد التحويل</dt>
-            <dd className="mt-2 font-semibold">
-              {formatEGP(Math.max(0, orderTotal - depositAmount))}
+            <dd className="sm:mt-2 font-semibold">
+              <Currency value={Math.max(0, orderTotal - depositAmount)} />
             </dd>
           </div>
         )}
       </dl>
       {!loaded ? (
         <p role="status">جاري تحميل طرق الدفع…</p>
+      ) : isError ? (
+        <div
+          role="status"
+          className="rounded-xl border border-amber-400/25 bg-amber-400/5 p-4 text-sm text-amber-200"
+        >
+          تعذر الاتصال بخدمة إعدادات الدفع. يرجى إعادة المحاولة قبل التحويل.
+          <button type="button" onClick={() => void refetch()} className="block mt-2 underline">
+            إعادة تحميل إعدادات الدفع
+          </button>
+        </div>
       ) : !methods.length ? (
         <p role="status" className="text-amber-300">
-          الدفع غير متاح حالياً. يرجى التواصل مع المتجر قبل التحويل.
+          لم يضبط المتجر حساب التحويل بعد. يمكنك اختيار الصورة، لكن لا يمكن رفع مطالبة دفع أو إتمام
+          الطلب قبل إعداد الحساب. يرجى التواصل مع المتجر قبل التحويل.
         </p>
       ) : (
         <>
           <fieldset disabled={progress !== null || receiptFile !== null} className="space-y-3">
             <legend className="text-sm font-semibold mb-3">طريقة الدفع</legend>
-            <div className="grid grid-cols-2 gap-3">
+            <div className={`grid gap-3 ${methods.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
               {methods.map((m) => (
                 <label
                   key={m.id}
@@ -190,41 +223,65 @@ export default function DepositPaymentUpload({
               </p>
             </div>
           )}
-          <label
-            onDragOver={(event) => {
-              event.preventDefault();
-              if (progress === null) setDragging(true);
-            }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={(event) => {
-              event.preventDefault();
-              setDragging(false);
-              if (event.dataTransfer.files.length !== 1) {
-                setError('يرجى اختيار صورة واحدة فقط.');
-                return;
-              }
-              upload(event.dataTransfer.files[0]);
-            }}
-            className={`block rounded-2xl border border-dashed p-5 bg-surface-secondary space-y-3 transition-colors ${dragging ? 'border-brand-500 bg-brand-500/10' : 'border-brand-500/40'}`}
-          >
-            <span className="block text-sm font-semibold">صورة إيصال التحويل</span>
-            <input
-              aria-describedby="proof-help proof-error"
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              disabled={progress !== null}
-              onChange={(e) => {
-                upload(e.target.files?.[0]);
-                e.target.value = '';
-              }}
-              className="block w-full min-w-0 text-sm file:me-3 file:rounded-lg file:border-0 file:bg-brand-500 file:p-3 file:text-slate-950"
-            />
-            <span id="proof-help" className="block text-xs text-text-muted">
-              اسحب الصورة هنا أو اخترها من المعرض. JPEG، PNG أو WebP — حتى 5 ميجابايت. يتم حفظها
-              بشكل خاص عبر UploadThing.
-            </span>
-          </label>
         </>
+      )}
+      {config?.configuration?.uploadReady === false && (
+        <p
+          role="status"
+          className="rounded-xl border border-amber-400/25 p-4 text-sm text-amber-200"
+        >
+          خدمة رفع إثبات التحويل غير مهيأة لدى المتجر. لا تحوّل المبلغ قبل تأكيد جاهزية الخدمة.
+        </p>
+      )}
+      <motion.label
+        animate={{ scale: dragging && !reducedMotion ? 1.01 : 1 }}
+        whileHover={reducedMotion ? undefined : { borderColor: '#34d399' }}
+        onDragOver={(event) => {
+          event.preventDefault();
+          if (progress === null) setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(event) => {
+          event.preventDefault();
+          setDragging(false);
+          if (event.dataTransfer.files.length !== 1) {
+            setError('يرجى اختيار صورة واحدة فقط.');
+            return;
+          }
+          upload(event.dataTransfer.files[0]);
+        }}
+        className={`relative block cursor-pointer rounded-2xl border border-dashed p-5 bg-surface-secondary space-y-3 text-center transition-colors focus-within:ring-2 focus-within:ring-brand-500 focus-within:ring-offset-2 focus-within:ring-offset-slate-950 ${dragging ? 'border-brand-500 bg-brand-500/10' : 'border-brand-500/40'}`}
+      >
+        <UploadCloud aria-hidden="true" className="mx-auto h-7 w-7 text-brand-500" />
+        <span className="block text-sm font-semibold">صورة إثبات التحويل</span>
+        <span className="inline-flex rounded-lg bg-brand-500/15 px-4 py-2 text-sm font-semibold text-brand-500">
+          {preview ? 'اختيار صورة بديلة' : 'اختيار صورة التحويل'}
+        </span>
+        <input
+          aria-label="اختيار صورة إثبات التحويل"
+          aria-describedby="proof-help proof-error"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          disabled={progress !== null}
+          onChange={(e) => {
+            upload(e.target.files?.[0]);
+            e.target.value = '';
+          }}
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-wait"
+        />
+        <span id="proof-help" className="block text-xs text-text-muted">
+          اسحب الصورة هنا أو اخترها من المعرض. JPEG، PNG أو WebP — حتى 5 ميجابايت.
+        </span>
+      </motion.label>
+      {preview && !receiptFile && progress === null && (
+        <button
+          type="button"
+          disabled={!ready}
+          className="btn-secondary disabled:opacity-50"
+          onClick={() => upload(selectedFile.current || undefined)}
+        >
+          {error ? 'إعادة محاولة الرفع' : 'رفع الصورة'}
+        </button>
       )}
       <AnimatePresence initial={false}>
         {preview && (
@@ -245,7 +302,11 @@ export default function DepositPaymentUpload({
               type="button"
               className="btn-secondary"
               onClick={() => {
-                request.current?.abort();
+                const pending = request.current;
+                request.current = null;
+                pending?.abort();
+                selectedFile.current = null;
+                setProgress(null);
                 setPreview(null);
                 onReceiptUpload(null);
                 setError('');
@@ -256,7 +317,7 @@ export default function DepositPaymentUpload({
           </motion.div>
         )}
       </AnimatePresence>
-      <motion.div layout role="status" aria-live="polite" className="text-sm">
+      <motion.div layout={!reducedMotion} role="status" aria-live="polite" className="text-sm">
         {progress !== null ? (
           <>
             <progress
@@ -273,8 +334,13 @@ export default function DepositPaymentUpload({
           </motion.span>
         ) : null}
       </motion.div>
-      <motion.p layout id="proof-error" role="alert" className="text-sm text-red-300">
-        {error || (isError ? 'تعذر تحميل طرق الدفع. يرجى المحاولة لاحقاً.' : '')}
+      <motion.p
+        layout={!reducedMotion}
+        id="proof-error"
+        role={error ? 'alert' : undefined}
+        className={`text-sm ${error ? 'text-red-300' : 'text-text-muted'}`}
+      >
+        {error}
         {!receiptFile &&
           progress === null &&
           !error &&
@@ -282,6 +348,6 @@ export default function DepositPaymentUpload({
             ? 'يرجى رفع صورة تحويل عربون الحجز بقيمة 100 جنيه.'
             : 'يرجى رفع صورة تحويل مصاريف التوصيل لإتمام الطلب.')}
       </motion.p>
-    </section>
+    </motion.section>
   );
 }

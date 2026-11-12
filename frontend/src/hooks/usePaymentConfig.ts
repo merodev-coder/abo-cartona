@@ -4,6 +4,7 @@ import { getApiUrl } from '@/lib/apiConfig';
 export interface PaymentConfig {
   methods: { id: string; name: string; destination: string }[];
   maxBytes: number;
+  configuration?: { destinationReady: boolean; uploadReady: boolean };
   store?: { name: string; address: string; hours: string; phone: string; mapUrl?: string };
 }
 export function usePaymentConfig() {

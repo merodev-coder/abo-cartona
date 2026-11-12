@@ -1,4 +1,5 @@
 'use client';
+import Currency from '@/components/ui/Currency';
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6,6 +7,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CartReview from './components/CartReview';
 import DepositPaymentUpload from './components/PaymentDeposit';
+import { usePaymentConfig } from '@/hooks/usePaymentConfig';
 import OrderSummary from './components/OrderSummary';
 import Icon from '@/components/ui/AppIcon';
 import CustomDropdown from '@/components/ui/CustomDropdown';
@@ -169,6 +171,11 @@ export default function CheckoutPage() {
   const activeGov = activeShippingMethod?.governorates.find((g) => g.name === selectedGovName);
 
   const depositAmount = deliveryMethod === 'pickup' ? 100 : shippingCost;
+  const paymentConfig = usePaymentConfig();
+  const paymentReady =
+    !paymentConfig.isError &&
+    !!paymentConfig.data?.methods.some((method) => method.destination.trim()) &&
+    paymentConfig.data?.configuration?.uploadReady !== false;
   const receiptContext = `${deliveryMethod}:${Math.round(depositAmount * 100)}`;
   useEffect(() => {
     setReceipt((previous) => (previous?.context === receiptContext ? previous : null));
@@ -194,7 +201,7 @@ export default function CheckoutPage() {
     step2Valid &&
     cartItems.length > 0 &&
     termsAgreed &&
-    receiptFile !== null &&
+    (depositAmount === 0 || (receiptFile !== null && paymentReady)) &&
     (deliveryMethod !== 'pickup' || subtotal >= 100);
 
   useEffect(() => {
@@ -353,7 +360,7 @@ export default function CheckoutPage() {
       alert('يرجى الموافقة على شروط الخدمة');
       return;
     }
-    if (!receiptFile) {
+    if (depositAmount > 0 && !receiptFile) {
       alert('يرجى رفع إيصال دفع العربون');
       return;
     }
@@ -868,7 +875,7 @@ export default function CheckoutPage() {
                                         تكلفة الشحن لـ {selectedGovName}
                                       </span>
                                       <span className="text-sm font-black text-brand-500">
-                                        {shippingCost} جنيه
+                                        <Currency value={shippingCost} />
                                       </span>
                                     </div>
                                     <div className="flex items-center justify-between p-3 rounded-xl bg-amber-500/5 border border-amber-500/20">
@@ -876,7 +883,7 @@ export default function CheckoutPage() {
                                         العربون المطلوب
                                       </span>
                                       <span className="text-sm font-black text-amber-400">
-                                        {depositAmount} جنيه
+                                        <Currency value={depositAmount} />
                                       </span>
                                     </div>
                                     {isBostaSelected && (
@@ -911,7 +918,7 @@ export default function CheckoutPage() {
 
                     {/* Payment deposit — delivery only */}
                     <AnimatePresence>
-                      {(deliveryMethod === 'delivery' || deliveryMethod === 'pickup') && (
+                      {depositAmount > 0 && (
                         <motion.div key="payment" {...fadeUp}>
                           <GlassCard className="p-6">
                             <SectionTitle icon="CreditCardIcon" label="دفع العربون" />
@@ -985,11 +992,13 @@ export default function CheckoutPage() {
                             ? '⚠️ أدخل العنوان'
                             : deliveryMethod === 'delivery' && !selectedGovName
                               ? '⚠️ اختر المحافظة'
-                              : !receiptFile
-                                ? '⚠️ ارفع إيصال الدفع'
-                                : !termsAgreed
-                                  ? '⚠️ وافق على شروط الخدمة'
-                                  : ''}
+                              : depositAmount > 0 && !paymentReady
+                                ? '⚠️ يرجى انتظار تهيئة بيانات الدفع لدى المتجر'
+                                : depositAmount > 0 && !receiptFile
+                                  ? '⚠️ ارفع إيصال الدفع'
+                                  : !termsAgreed
+                                    ? '⚠️ وافق على شروط الخدمة'
+                                    : ''}
                       </p>
                     )}
 

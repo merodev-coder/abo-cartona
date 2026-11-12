@@ -17,9 +17,4 @@ export function checkoutKey(payload: string): string {
   sessionStorage.setItem('checkout-attempt', JSON.stringify({ payload, key }));
   return key;
 }
-export const formatEGP = (value: number) =>
-  new Intl.NumberFormat('ar-EG', {
-    style: 'currency',
-    currency: 'EGP',
-    maximumFractionDigits: 2,
-  }).format(value);
+export { formatEGP } from './currency';

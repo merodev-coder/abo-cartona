@@ -5,7 +5,7 @@ import { PaymentProof } from '../models/PaymentProof.js';
 import { checkoutQuote } from '../utils/checkoutQuote.js';
 import { depositRequirement, validateProofRequirement } from '../utils/depositRequirement.js';
 import { commitInventory } from '../utils/commitInventory.js';
-import { customerToken, ownerHash } from './depositController.js';
+import { customerToken, ownerHash, paymentMethods } from './depositController.js';
 import { sendOrderReceipt } from '../utils/emailService.js';
 import { storeConfig } from '../utils/storeConfig.js';
 
@@ -67,19 +67,29 @@ export async function createOrder(req, res, next) {
         throw Object.assign(new Error('مبلغ العربون لا يطابق المبلغ المطلوب. يرجى مراجعة الطلب.'), {
           statusCode: 400,
         });
-      if (!mongoose.isValidObjectId(body.proofId))
-        throw Object.assign(new Error('يرجى رفع إثبات دفع صالح.'), { statusCode: 400 });
-      const proof = await PaymentProof.findOne({
-        _id: body.proofId,
-        ownerHash: ownerHash(token),
-        order: null,
-        expiresAt: { $gt: new Date() },
-      }).session(session);
-      if (!proof)
-        throw Object.assign(new Error('إثبات الدفع غير صالح أو تم استخدامه بالفعل.'), {
-          statusCode: 400,
-        });
-      validateProofRequirement(proof, amounts, body.deliveryMethod);
+      let proof;
+      if (amounts.depositAmountMinor > 0) {
+        if (!mongoose.isValidObjectId(body.proofId))
+          throw Object.assign(new Error('يرجى رفع إثبات دفع صالح.'), {
+            statusCode: 400,
+          });
+        proof = await PaymentProof.findOne({
+          _id: body.proofId,
+          ownerHash: ownerHash(token),
+          order: null,
+          expiresAt: { $gt: new Date() },
+        }).session(session);
+        if (!proof)
+          throw Object.assign(new Error('إثبات الدفع غير صالح أو تم استخدامه بالفعل.'), {
+            statusCode: 400,
+          });
+        validateProofRequirement(proof, amounts, body.deliveryMethod);
+        if (!paymentMethods().some((method) => method.id === proof.paymentMethod))
+          throw Object.assign(
+            new Error('لم يتم إعداد حساب التحويل لهذه الطريقة. يرجى التواصل مع المتجر.'),
+            { statusCode: 400 }
+          );
+      }
       // Pickup orders do not lock stock while evidence is unverified. Approval
       // atomically checks and commits stock. Delivery retains immediate allocation.
       if (!pickup) await commitInventory(quote.items, session);
@@ -106,13 +116,21 @@ export async function createOrder(req, res, next) {
             shippingCost: quote.shippingMinor / 100,
             requiredDeposit: amounts.depositAmountMinor / 100,
             ...amounts,
-            depositStatus: 'PENDING_VERIFICATION',
-            depositProofStorageKey: proof.key,
-            depositProofFileKey: proof.key,
-            depositProofReference: `uploadthing:${proof.key}`,
-            paymentMethod: proof.paymentMethod,
-            depositSubmittedAt: new Date(),
-            depositHistory: [{ status: 'PENDING_VERIFICATION', at: new Date(), by: 'customer' }],
+            depositStatus: proof ? 'PENDING_VERIFICATION' : 'NOT_REQUIRED',
+            depositProofStorageKey: proof?.key,
+            depositProofFileKey: proof?.key,
+            depositProofReference: proof ? `uploadthing:${proof.key}` : undefined,
+            paymentMethod: proof?.paymentMethod,
+            depositSubmittedAt: proof ? new Date() : undefined,
+            depositHistory: proof
+              ? [
+                  {
+                    status: 'PENDING_VERIFICATION',
+                    at: new Date(),
+                    by: 'customer',
+                  },
+                ]
+              : [],
             inventoryCommitted: !pickup,
             status: 'Pending',
             pickupLocation: pickup
@@ -130,8 +148,10 @@ export async function createOrder(req, res, next) {
         ],
         { session }
       );
-      proof.order = order._id;
-      await proof.save({ session });
+      if (proof) {
+        proof.order = order._id;
+        await proof.save({ session });
+      }
       created = true;
     });
     res

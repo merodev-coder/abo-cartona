@@ -19,16 +19,35 @@ const client = () =>
     forcePathStyle: process.env.PROOF_S3_PATH_STYLE === 'true',
     maxAttempts: 2,
   }));
-export const storageReady = () =>
-  Boolean(
+export function storageReady() {
+  const token =
     process.env.UPLOADTHING_TOKEN ||
     process.env.UPLOADTHING_SECRET ||
-    process.env.UPLOADTHING_API_KEY
-  );
+    process.env.UPLOADTHING_API_KEY;
+  if (!token?.trim()) return false;
+  try {
+    const config = JSON.parse(Buffer.from(token.trim(), 'base64').toString('utf8'));
+    return (
+      typeof config.apiKey === 'string' &&
+      config.apiKey.startsWith('sk_') &&
+      typeof config.appId === 'string' &&
+      config.appId.length > 0 &&
+      Array.isArray(config.regions) &&
+      config.regions.length > 0 &&
+      config.regions.every((region) => typeof region === 'string' && region.length > 0)
+    );
+  } catch {
+    return false;
+  }
+}
 export async function storeProof(body) {
   const result = await uploadthing().uploadFiles(
     new UTFile([body], `${crypto.randomUUID()}.webp`, { type: 'image/webp' }),
-    { acl: 'private', contentDisposition: 'inline', signal: AbortSignal.timeout(60000) }
+    {
+      acl: 'private',
+      contentDisposition: 'inline',
+      signal: AbortSignal.timeout(60000),
+    }
   );
   if (result.error || !result.data?.key)
     throw Object.assign(
@@ -40,7 +59,9 @@ export async function storeProof(body) {
 }
 export async function proofUrl(key) {
   if (!key.startsWith('payment-proofs/')) {
-    const result = await uploadthing().generateSignedURL(key, { expiresIn: 60 });
+    const result = await uploadthing().generateSignedURL(key, {
+      expiresIn: 60,
+    });
     return result.ufsUrl;
   }
   return getSignedUrl(

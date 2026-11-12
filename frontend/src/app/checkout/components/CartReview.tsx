@@ -1,4 +1,5 @@
 'use client';
+import Currency from '@/components/ui/Currency';
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -94,19 +95,17 @@ export default function CartReview({
                               <span className="badge-size text-[9px]">{item.size}</span>
                             )}
                             <p className="text-sm font-bold text-brand-500">
-                              {item.price === 0
-                                ? 'مجاناً 🎁'
-                                : `${item.price.toLocaleString('ar-EG')} جنيه`}
+                              {item.price === 0 ? 'مجاناً 🎁' : <Currency value={item.price} />}
                             </p>
                           </>
                         ) : (
                           <>
                             <p className="text-sm font-bold text-brand-500">
-                              {item.price.toLocaleString('ar-EG')} جنيه
+                              <Currency value={item.price} />
                             </p>
                             {item.oldPrice && item.oldPrice > 0 && (
                               <p className="text-xs text-text-muted line-through">
-                                {item.oldPrice.toLocaleString('ar-EG')} جنيه
+                                <Currency value={item.oldPrice} />
                               </p>
                             )}
                           </>

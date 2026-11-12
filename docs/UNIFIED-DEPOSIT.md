@@ -1,5 +1,9 @@
 # Unified deposit proof workflow
 
+For the subsequent uploader visibility, payment-readiness and RTL currency repair,
+see [Checkout deposit repair](CHECKOUT-DEPOSIT-FIX.md). Zero-fee delivery now records
+`NOT_REQUIRED` and does not request payment proof.
+
 This update supersedes the earlier S3 upload and delivery deposit policy described
 in the refinement report. It reuses the existing shared checkout component,
 Express proof endpoint, UploadThing SDK/application, order models and admin review.

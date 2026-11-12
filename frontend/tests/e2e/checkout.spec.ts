@@ -1,4 +1,12 @@
 import { test, expect, type Page } from '@playwright/test';
+import { formatEGPNumber } from '../../src/lib/currency';
+
+test('EGP amounts round consistently and have no embedded bidi currency controls', () => {
+  expect(formatEGPNumber(1234567.5)).toBe('1,234,567.50');
+  expect(formatEGPNumber(35)).toBe('35.00');
+  expect(formatEGPNumber(1.235)).toBe('1.24');
+  expect(formatEGPNumber(Number.NaN)).toBe('—');
+});
 const product = {
   id: '507f1f77bcf86cd799439011',
   _id: '507f1f77bcf86cd799439011',
@@ -27,6 +35,7 @@ async function setup(page: Page, price = 650, configured = true) {
     if (path.endsWith('/payment-config'))
       return route.fulfill({
         json: {
+          configuration: { destinationReady: configured, uploadReady: true },
           methods: configured
             ? [{ id: 'instapay', name: 'InstaPay', destination: 'isolated-fixture' }]
             : [],
@@ -124,6 +133,15 @@ for (const width of [320, 360, 375, 390, 430, 768, 1024, 1440, 1920]) {
         fullPage: true,
         animations: 'disabled',
       });
+      await page.setViewportSize({ width, height: 1600 });
+      await page
+        .locator('section[aria-label="إثبات دفع العربون"]')
+        .evaluate((element) =>
+          window.scrollTo(0, element.getBoundingClientRect().top + window.scrollY - 100)
+        );
+      await page
+        .locator('section[aria-label="إثبات دفع العربون"]')
+        .screenshot({ path: `qa/deposit-${width}.png`, animations: 'disabled' });
     }
   });
 }
@@ -164,8 +182,21 @@ test('below-minimum pickup is blocked with an explicit policy', async ({ page })
 test('missing payment configuration never invents a destination', async ({ page }) => {
   await setup(page, 650, false);
   await pickup(page);
-  await expect(page.getByText('الدفع غير متاح حالياً.', { exact: false })).toBeVisible();
-  await expect(page.locator('input[type=file]')).toHaveCount(0);
+  await expect(page.getByText('لم يضبط المتجر حساب التحويل بعد.', { exact: false })).toBeVisible();
+  await expect(page.locator('input[type=file]')).toBeVisible();
+  let uploaded = false;
+  await page.route('**/api/orders/proofs', (route) => {
+    uploaded = true;
+    return route.abort();
+  });
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'proof.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from('local-preview-only'),
+  });
+  await expect(page.getByRole('button', { name: 'رفع الصورة', exact: true })).toBeDisabled();
+  expect(uploaded).toBe(false);
+  await expect(page.getByRole('button', { name: 'تأكيد الطلب', exact: true })).toBeDisabled();
 });
 test('reduced motion keeps checkout usable with native radio keyboard controls', async ({
   page,
@@ -180,6 +211,97 @@ test('reduced motion keeps checkout usable with native radio keyboard controls',
   await expect(radio).toBeChecked();
   await page.getByRole('button', { name: /متابعة:/ }).click();
   await expect(page.getByRole('heading', { name: 'عربون تأكيد الحجز' })).toBeVisible();
+});
+
+test('failed configuration requests retain the upload box and show a retry action', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.route('**/api/orders/payment-config', (route) =>
+    route.fulfill({ status: 503, json: {} })
+  );
+  await pickup(page);
+  await expect(page.getByRole('button', { name: 'إعادة تحميل إعدادات الدفع' })).toBeVisible();
+  await expect(page.locator('input[type=file]')).toBeVisible();
+});
+
+test('missing UploadThing configuration keeps the destination and uploader visible', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.route('**/api/orders/payment-config', (route) =>
+    route.fulfill({
+      json: {
+        methods: [{ id: 'instapay', name: 'InstaPay', destination: 'isolated-fixture' }],
+        maxBytes: 5242880,
+        configuration: { destinationReady: true, uploadReady: false },
+      },
+    })
+  );
+  await pickup(page);
+  await expect(page.getByText('isolated-fixture', { exact: true })).toBeVisible();
+  await expect(page.getByText('خدمة رفع إثبات التحويل غير مهيأة', { exact: false })).toBeVisible();
+  await expect(page.locator('input[type=file]')).toBeVisible();
+  await fillCustomer(page);
+  await expect(page.getByRole('button', { name: 'تأكيد الطلب', exact: true })).toBeDisabled();
+});
+
+test('zero-fee delivery can submit without a payment claim or destination', async ({ page }) => {
+  await setup(page, 650, false);
+  await page.route('**/api/shipping/methods', (route) =>
+    route.fulfill({
+      json: {
+        methods: [
+          {
+            _id: 'free',
+            name: 'Free test delivery',
+            governorates: [{ _id: 'free-city', name: 'القاهرة', cost: 0 }],
+          },
+        ],
+      },
+    })
+  );
+  await page.goto('/checkout');
+  await page.getByRole('button', { name: /متابعة:/ }).click();
+  await page.getByRole('button', { name: /اختر المحافظة/ }).click();
+  await page.getByRole('button', { name: /القاهرة/ }).click();
+  await fillCustomer(page);
+  await page
+    .getByPlaceholder('المحافظة، المنطقة، اسم الشارع، رقم العمارة، رقم الشقة')
+    .fill('عنوان الاختبار');
+  await expect(page.locator('input[type=file]')).toHaveCount(0);
+  const button = page.getByRole('button', { name: 'تأكيد وإرسال الطلب', exact: true });
+  await expect(button).toBeEnabled();
+  const request = page.waitForRequest(
+    (r) => r.url().endsWith('/api/orders') && r.method() === 'POST'
+  );
+  await button.click();
+  const payload = (await request).postDataJSON();
+  expect(payload.depositAmountMinor).toBe(0);
+  expect(payload.proofId).toBeNull();
+});
+
+test('failed uploads can be retried without reselecting the image', async ({ page }) => {
+  await setup(page);
+  let count = 0;
+  await page.route('**/api/orders/proofs', (route) =>
+    ++count === 1
+      ? route.fulfill({ status: 503, json: { error: 'تعذر رفع إثبات التحويل' } })
+      : route.fulfill({ status: 201, json: { proofId: '507f1f77bcf86cd799439019' } })
+  );
+  await pickup(page);
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'proof.webp',
+    mimeType: 'image/webp',
+    buffer: Buffer.from('isolated-mocked-upload'),
+  });
+  await page.getByRole('button', { name: 'إعادة محاولة الرفع' }).click();
+  await expect(page.getByText('تم حفظ الصورة بأمان.', { exact: false })).toBeVisible();
+  expect(count).toBe(2);
+  await expect(page.locator('section[aria-label="إثبات دفع العربون"] bdi').first()).toHaveAttribute(
+    'dir',
+    'ltr'
+  );
 });
 
 test('home delivery keeps its configured shipping deposit and address fields', async ({ page }) => {
@@ -205,13 +327,11 @@ async function fillCustomer(page: Page) {
   await page.locator('input[type=checkbox]').check();
 }
 async function uploadScreenshot(page: Page) {
-  await page
-    .locator('input[type=file]')
-    .setInputFiles({
-      name: 'proof.png',
-      mimeType: 'image/png',
-      buffer: Buffer.from('isolated-mocked-upload'),
-    });
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'proof.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from('isolated-mocked-upload'),
+  });
   await expect(page.getByText('تم حفظ الصورة بأمان.', { exact: false })).toBeVisible();
 }
 test('changing fulfillment invalidates proof permanently, including switching back', async ({
@@ -225,7 +345,7 @@ test('changing fulfillment invalidates proof permanently, including switching ba
   await page.getByRole('button', { name: 'تغيير', exact: true }).click();
   await page.getByRole('radio', { name: /توصيل للمنزل/ }).check();
   await page.getByRole('button', { name: /متابعة:/ }).click();
-  await expect(page.getByRole('heading', { name: 'دفع مصاريف التوصيل' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'دفع مصاريف التوصيل' })).toHaveCount(0);
   await expect(page.getByRole('img', { name: 'معاينة إيصال التحويل' })).toHaveCount(0);
   await page.getByRole('button', { name: 'تغيير', exact: true }).click();
   await page.getByRole('radio', { name: /استلام من المحل/ }).check();
@@ -258,13 +378,11 @@ test('upload in progress blocks submission and a failed upload stays blocked', a
     await pending;
     await route.fulfill({ status: 503, json: { error: 'تعذر رفع إثبات التحويل' } });
   });
-  await page
-    .locator('input[type=file]')
-    .setInputFiles({
-      name: 'proof.png',
-      mimeType: 'image/png',
-      buffer: Buffer.from('isolated-mocked-upload'),
-    });
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'proof.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from('isolated-mocked-upload'),
+  });
   const confirm = page.getByRole('button', { name: 'تأكيد الطلب', exact: true });
   await expect(confirm).toBeDisabled();
   await expect(page.getByRole('progressbar')).toBeVisible();

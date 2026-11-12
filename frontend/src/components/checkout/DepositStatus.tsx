@@ -1,7 +1,8 @@
 'use client';
+import Currency from '@/components/ui/Currency';
 import { useEffect, useState } from 'react';
 import { getApiUrl } from '@/lib/apiConfig';
-import { checkoutToken, formatEGP } from '@/lib/checkoutSession';
+import { checkoutToken } from '@/lib/checkoutSession';
 import { depositLabels } from '@/lib/depositLabels';
 import DepositPaymentUpload from '@/app/checkout/components/PaymentDeposit';
 import Icon from '@/components/ui/AppIcon';
@@ -83,15 +84,21 @@ export default function DepositStatus({ orderID }: { orderID: string }) {
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between gap-2">
               <dt>الإجمالي</dt>
-              <dd>{formatEGP(order.orderTotalMinor / 100)}</dd>
+              <dd>
+                <Currency value={order.orderTotalMinor / 100} />
+              </dd>
             </div>
             <div className="flex justify-between gap-2">
               <dt>العربون</dt>
-              <dd>{formatEGP(order.depositAmountMinor / 100)}</dd>
+              <dd>
+                <Currency value={order.depositAmountMinor / 100} />
+              </dd>
             </div>
             <div className="flex justify-between gap-2">
               <dt>المتبقي بعد تأكيد التحويل</dt>
-              <dd>{formatEGP(order.remainingBalanceMinor / 100)}</dd>
+              <dd>
+                <Currency value={order.remainingBalanceMinor / 100} />
+              </dd>
             </div>
           </dl>
           {order.depositStatus === 'REJECTED' && order.status !== 'Cancelled' && (

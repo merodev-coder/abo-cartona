@@ -1,4 +1,5 @@
 'use client';
+import Currency from '@/components/ui/Currency';
 
 import React, { Suspense } from 'react';
 import Header from '@/components/Header';
@@ -143,7 +144,7 @@ function SuccessContent() {
               إجمالي الأوردر
             </span>
             <span className="text-[13px] font-black" style={{ color: '#FFFFFF' }}>
-              {Number(total).toLocaleString('ar-EG')} جنيه
+              <Currency value={Number(total)} />
             </span>
           </div>
           <div className="h-px w-full" style={{ background: 'rgba(255,255,255,0.04)' }} />

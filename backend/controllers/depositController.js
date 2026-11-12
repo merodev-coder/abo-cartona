@@ -18,12 +18,27 @@ export function paymentMethods() {
       name: 'Vodafone Cash',
       destination: process.env.PAYMENT_VODAFONE_DESTINATION,
     },
-    { id: 'instapay', name: 'InstaPay', destination: process.env.PAYMENT_INSTAPAY_DESTINATION },
-  ].filter((method) => method.destination);
+    {
+      id: 'instapay',
+      name: 'InstaPay',
+      destination: process.env.PAYMENT_INSTAPAY_DESTINATION,
+    },
+  ]
+    .map((method) => ({ ...method, destination: method.destination?.trim() }))
+    .filter(
+      (method) =>
+        method.destination &&
+        method.destination.length <= 254 &&
+        !/[\x00-\x1f\x7f]/.test(method.destination)
+    );
 }
 export function paymentConfig(req, res) {
   res.set('Cache-Control', 'no-store').json({
-    methods: storageReady() ? paymentMethods() : [],
+    methods: paymentMethods(),
+    configuration: {
+      destinationReady: paymentMethods().length > 0,
+      uploadReady: storageReady(),
+    },
     maxBytes: Math.min(Number(process.env.PROOF_MAX_BYTES) || 5242880, 5242880),
     pickupDeposit: 100,
     pickupMinimum: 100,
@@ -71,22 +86,32 @@ export async function uploadProof(req, res, next) {
       fulfillmentMethod = checkout.deliveryMethod;
       requirement = depositRequirement(fulfillmentMethod, await checkoutQuote(checkout, null));
     }
+    if (requirement.depositAmountMinor <= 0)
+      return res.status(400).json({ error: 'هذا الطلب لا يتطلب دفع عربون.' });
     if (
       !/^\d+$/.test(req.body.depositAmountMinor || '') ||
       Number(req.body.depositAmountMinor) !== requirement.depositAmountMinor
     )
-      return res
-        .status(400)
-        .json({ error: 'تغير المبلغ المطلوب. يرجى مراجعة رسوم الشحن والعربون قبل الرفع.' });
+      return res.status(400).json({
+        error: 'تغير المبلغ المطلوب. يرجى مراجعة رسوم الشحن والعربون قبل الرفع.',
+      });
     let image;
     try {
-      const input = sharp(req.file.buffer, { limitInputPixels: 24000000, animated: false });
+      const input = sharp(req.file.buffer, {
+        limitInputPixels: 24000000,
+        animated: false,
+      });
       const metadata = await input.metadata();
       if (!['jpeg', 'png', 'webp'].includes(metadata.format) || (metadata.pages || 1) > 1)
         throw new Error('format');
       image = await input
         .rotate()
-        .resize({ width: 2000, height: 2000, fit: 'inside', withoutEnlargement: true })
+        .resize({
+          width: 2000,
+          height: 2000,
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
         .webp({ quality: 85 })
         .toBuffer();
     } catch {
@@ -177,11 +202,14 @@ export async function reviewDeposit(req, res, next) {
         { new: true, session }
       );
       if (!updated)
-        throw Object.assign(new Error('تمت مراجعة التحويل بالفعل.'), { statusCode: 409 });
+        throw Object.assign(new Error('تمت مراجعة التحويل بالفعل.'), {
+          statusCode: 409,
+        });
     });
-    res
-      .set('Cache-Control', 'no-store')
-      .json({ depositStatus: updated.depositStatus, depositHistory: updated.depositHistory });
+    res.set('Cache-Control', 'no-store').json({
+      depositStatus: updated.depositStatus,
+      depositHistory: updated.depositHistory,
+    });
     sendDepositStatusNotice(updated).catch(() =>
       console.error('[Email] Payment notification failed')
     );
@@ -235,7 +263,15 @@ export async function resubmitProof(req, res, next) {
         { $set: { order: null } },
         { session, new: true }
       );
-      if (!proof) throw Object.assign(new Error('إثبات الدفع غير صالح.'), { statusCode: 400 });
+      if (!proof)
+        throw Object.assign(new Error('إثبات الدفع غير صالح.'), {
+          statusCode: 400,
+        });
+      if (!paymentMethods().some((method) => method.id === proof.paymentMethod))
+        throw Object.assign(
+          new Error('لم يتم إعداد حساب التحويل لهذه الطريقة. يرجى التواصل مع المتجر.'),
+          { statusCode: 400 }
+        );
       const existing = await Order.findOne({
         orderID: req.params.id,
         customerTokenHash: ownerHash(token),
@@ -276,7 +312,11 @@ export async function resubmitProof(req, res, next) {
             depositRejectionReason: null,
           },
           $push: {
-            depositHistory: { status: 'PENDING_VERIFICATION', at: new Date(), by: 'customer' },
+            depositHistory: {
+              status: 'PENDING_VERIFICATION',
+              at: new Date(),
+              by: 'customer',
+            },
           },
         },
         { session, new: true }

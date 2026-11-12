@@ -1,4 +1,5 @@
 'use client';
+import Currency from '@/components/ui/Currency';
 
 import React from 'react';
 import Icon from '@/components/ui/AppIcon';
@@ -81,7 +82,9 @@ export default function OrderSummary({
               {item.price * item.quantity === 0 ? (
                 <span className="text-brand-500 font-bold">مجاناً</span>
               ) : (
-                <>{(item.price * item.quantity).toLocaleString('ar-EG')} جنيه</>
+                <>
+                  <Currency value={item.price * item.quantity} />
+                </>
               )}
             </span>
           </div>
@@ -103,7 +106,7 @@ export default function OrderSummary({
         <div className="flex items-center justify-between">
           <span className="text-sm text-text-muted">إجمالي المنتجات</span>
           <span className="text-sm font-bold text-text-primary">
-            {subtotal.toLocaleString('ar-EG')} جنيه
+            <Currency value={subtotal} />
           </span>
         </div>
         {dataDiscount > 0 && (
@@ -113,7 +116,7 @@ export default function OrderSummary({
               داتا مجانية مع الهارد
             </span>
             <span className="text-sm font-bold text-green-400">
-              -{dataDiscount.toLocaleString('ar-EG')} جنيه
+              -<Currency value={dataDiscount} />
             </span>
           </div>
         )}
@@ -122,7 +125,7 @@ export default function OrderSummary({
           <span
             className={`text-sm font-bold ${shippingCost === 0 ? 'text-brand-500' : 'text-text-primary'}`}
           >
-            {shippingCost === 0 ? 'مجاناً' : `${shippingCost} جنيه`}
+            {shippingCost === 0 ? 'مجاناً' : <Currency value={shippingCost} />}
           </span>
         </div>
       </div>
@@ -132,7 +135,7 @@ export default function OrderSummary({
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-black text-text-primary">الإجمالي</span>
           <span className="text-xl font-black text-text-primary">
-            {total.toLocaleString('ar-EG')} جنيه
+            <Currency value={total} />
           </span>
         </div>
         {depositAmount > 0 && (
@@ -141,12 +144,14 @@ export default function OrderSummary({
               <span className="text-xs text-amber-400 font-bold">
                 {isPickup ? 'عربون تأكيد الحجز' : 'مصاريف التوصيل مقدماً'}
               </span>
-              <span className="text-xs font-black text-amber-400">{depositAmount} جنيه</span>
+              <span className="text-xs font-black text-amber-400">
+                <Currency value={depositAmount} />
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xs text-text-muted">المتبقي عند الاستلام</span>
               <span className="text-xs font-bold text-text-muted">
-                {remaining.toLocaleString('ar-EG')} جنيه
+                <Currency value={remaining} />
               </span>
             </div>
           </div>
@@ -182,13 +187,15 @@ export default function OrderSummary({
           </>
         ) : (
           <>
-            <span className="relative z-10">تأكيد الأوردر ودفع العربون</span>
+            <span className="relative z-10">
+              {depositAmount > 0 ? 'تأكيد الأوردر ودفع العربون' : 'تأكيد الأوردر'}
+            </span>
             <Icon name="CheckCircleIcon" size={18} className="text-bg-deep relative z-10" />
           </>
         )}
       </button>
 
-      {!canConfirm && (
+      {!canConfirm && depositAmount > 0 && (
         <p className="text-xs text-amber-400 text-center mt-2 font-bold">
           ارفع صورة الإيصال لتأكيد الأوردر
         </p>
