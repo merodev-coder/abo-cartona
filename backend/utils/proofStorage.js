@@ -49,11 +49,19 @@ export async function storeProof(body) {
       signal: AbortSignal.timeout(60000),
     }
   );
-  if (result.error || !result.data?.key)
+  if (result.error || !result.data?.key) {
+    // Render's sanitized 503 response deliberately omits provider diagnostics.
+    // Log only the stable error code; never log the token, URL or file contents.
+    console.error(
+      `[UploadThing proof upload] code=${String(result.error?.code || 'MISSING_FILE_KEY')
+        .replace(/[^A-Z0-9_]/gi, '')
+        .slice(0, 64)}`
+    );
     throw Object.assign(
       new Error('تعذر حفظ الصورة بشكل خاص عبر UploadThing. يرجى مراجعة إعدادات الخصوصية.'),
       { statusCode: 503 }
     );
+  }
   // Deliberately return a storage key, never a public CDN URL.
   return result.data.key;
 }
