@@ -1,5 +1,8 @@
 # Storefront and checkout refinement
 
+**Current payment policy:** see [Unified deposit proof workflow](UNIFIED-DEPOSIT.md).
+It supersedes this report's original S3 upload setup and home-delivery deposit policy.
+
 ## Architecture and audit
 
 The existing application is Next.js App Router / React 19 / Tailwind with Zustand

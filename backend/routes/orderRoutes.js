@@ -28,7 +28,8 @@ const proofUpload = multer({
   limits: {
     fileSize: Math.min(Number(process.env.PROOF_MAX_BYTES) || 5242880, 5242880),
     files: 1,
-    fields: 2,
+    fields: 5,
+    fieldSize: 262144,
   },
 });
 const checkoutLimiter = rateLimit({

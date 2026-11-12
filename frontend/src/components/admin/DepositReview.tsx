@@ -3,9 +3,12 @@ import { useState } from 'react';
 import { getApiUrl } from '@/lib/apiConfig';
 import { formatEGP } from '@/lib/checkoutSession';
 import { depositLabels } from '@/lib/depositLabels';
+import Icon from '@/components/ui/AppIcon';
 interface Props {
   orderID: string;
   depositStatus: string;
+  fulfillmentMethod?: string;
+  depositType?: string;
   depositAmountMinor?: number;
   remainingBalanceMinor?: number;
   paymentMethod?: string;
@@ -17,6 +20,7 @@ export default function DepositReview(props: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [url, setUrl] = useState('');
+  const [history, setHistory] = useState(props.depositHistory || []);
   const headers = () => ({
     Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
     'Content-Type': 'application/json',
@@ -50,6 +54,7 @@ export default function DepositReview(props: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setStatus(data.depositStatus);
+      if (Array.isArray(data.depositHistory)) setHistory(data.depositHistory);
       setUrl('');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'تعذرت مراجعة التحويل');
@@ -62,7 +67,22 @@ export default function DepositReview(props: Props) {
       className="rounded-2xl border border-brand-500/20 bg-surface-secondary p-5 space-y-4"
       aria-busy={busy}
     >
-      <h2 className="text-lg font-semibold">مراجعة عربون الحجز</h2>
+      <h2 className="text-lg font-semibold">مراجعة دفعة التأكيد</h2>
+      <p className="text-sm text-text-secondary">
+        طريقة الاستلام: {props.fulfillmentMethod === 'pickup' ? 'استلام من المحل' : 'توصيل للمنزل'}{' '}
+        ·{' '}
+        {props.depositType === 'STORE_PICKUP_DEPOSIT'
+          ? 'عربون تأكيد الحجز'
+          : props.depositType === 'DELIVERY_FEE_DEPOSIT'
+            ? 'مصاريف التوصيل'
+            : 'دفعة سابقة'}
+      </p>
+      {props.fulfillmentMethod === 'pickup' && (
+        <p className="text-sm text-brand-500 flex items-center gap-2">
+          <Icon name="MapPinIcon" size={18} />
+          القاهرة - حدائق حلوان
+        </p>
+      )}
       <p role="status" className="text-brand-500">
         {depositLabels[status] || status}
       </p>
@@ -127,11 +147,11 @@ export default function DepositReview(props: Props) {
       <p role="alert" className="text-sm text-red-300">
         {error}
       </p>
-      {props.depositHistory?.length ? (
+      {history.length ? (
         <details>
           <summary className="cursor-pointer text-sm">سجل المراجعة</summary>
           <ul className="space-y-2 mt-3 text-sm text-text-secondary">
-            {props.depositHistory.map((entry, i) => (
+            {history.map((entry, i) => (
               <li key={i}>
                 {depositLabels[entry.status] || entry.status} · <bdi>{entry.by}</bdi> ·{' '}
                 {new Date(entry.at).toLocaleString('ar-EG')} {entry.reason && `— ${entry.reason}`}

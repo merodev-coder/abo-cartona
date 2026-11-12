@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Icon from '@/components/ui/AppIcon';
+import PickupInfo from '@/components/checkout/PickupInfo';
 import CustomDropdown from '@/components/ui/CustomDropdown';
 import { getApiUrl } from '@/lib/apiConfig';
 
@@ -57,13 +58,7 @@ export default function DeliveryOptions({
   const selectedGov = selectedMethod?.governorates.find((g) => g.name === selectedGovName);
   const shippingCost = deliveryType === 'pickup' ? 0 : selectedGov?.cost || 0;
 
-  const calcDeposit = () => {
-    if (deliveryType === 'pickup') return 100;
-    if (!selectedMethod || !selectedGov) return 50;
-    return selectedMethod.depositType === 'total_amount'
-      ? orderSubtotal + shippingCost
-      : Math.max(50, shippingCost);
-  };
+  const calcDeposit = () => (deliveryType === 'pickup' ? 100 : shippingCost);
 
   const notify = (
     type: 'delivery' | 'pickup',
@@ -71,12 +66,7 @@ export default function DeliveryOptions({
     cost: number,
     method?: ShippingMethodData
   ) => {
-    const deposit =
-      type === 'pickup'
-        ? 100
-        : method?.depositType === 'total_amount'
-          ? orderSubtotal + cost
-          : Math.max(50, cost);
+    const deposit = type === 'pickup' ? 100 : cost;
     onDeliveryChange(type, govName, cost, undefined, method?.name, method?.depositType, deposit);
   };
 
@@ -191,9 +181,7 @@ export default function DeliveryOptions({
                       <span
                         className={`text-xs ${selectedMethodId === m._id ? 'text-brand-500' : 'text-text-muted'}`}
                       >
-                        {m.depositType === 'total_amount'
-                          ? 'عربون: الإجمالي كامل'
-                          : 'عربون: تكلفة الشحن'}
+                        دفعة مقدمة بقيمة الشحن
                       </span>
                     </button>
                   ))}
@@ -242,40 +230,7 @@ export default function DeliveryOptions({
       )}
 
       {/* Store Pickup Details */}
-      {deliveryType === 'pickup' && (
-        <div className="p-4 rounded-2xl bg-surface-secondary border border-border space-y-4">
-          <h4 className="text-sm font-black text-text-primary">موقع المحل</h4>
-          <div className="flex items-start gap-3">
-            <Icon name="MapPinIcon" size={18} className="text-brand-500 mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="text-sm text-text-primary font-bold">أبوكرتونةaming Store</p>
-              <p className="text-xs text-text-muted mt-1">شارع الهرم، الجيزة — بجوار مول المحطة</p>
-              <p className="text-xs text-text-muted mt-1">السبت – الخميس: 11 ص – 11 م</p>
-            </div>
-          </div>
-          <div className="relative h-40 rounded-xl overflow-hidden bg-surface-tertiary border border-border flex items-center justify-center">
-            <div className="text-center">
-              <Icon name="MapIcon" size={32} className="text-brand-500 mx-auto mb-2" />
-              <p className="text-xs text-text-muted">افتح الخريطة</p>
-            </div>
-            <a
-              href="https://maps.google.com/?q=أبو+كارتونة+الجيزة"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="absolute inset-0 flex items-end p-3"
-            >
-              <span className="btn-primary px-4 py-2 text-xs font-bold flex items-center gap-1.5 relative z-10">
-                <span className="relative z-10">افتح في Google Maps</span>
-                <Icon
-                  name="ArrowTopRightOnSquareIcon"
-                  size={12}
-                  className="text-bg-deep relative z-10"
-                />
-              </span>
-            </a>
-          </div>
-        </div>
-      )}
+      {deliveryType === 'pickup' && <PickupInfo />}
     </div>
   );
 }

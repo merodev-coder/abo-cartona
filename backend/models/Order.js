@@ -53,8 +53,11 @@ const orderSchema = new mongoose.Schema(
     uploadedPhotoUrl: { type: String }, // UploadThing URL
     cityCode: { type: String },
     selectedShippingMethod: { type: String },
-    shippingCost: { type: Number, default: 0 },
-    requiredDeposit: { type: Number, default: 0 },
+    shippingCost: { type: Number, default: 0, alias: 'deliveryFee' },
+    requiredDeposit: { type: Number, default: 0, alias: 'depositAmount' },
+    depositType: { type: String, enum: ['STORE_PICKUP_DEPOSIT', 'DELIVERY_FEE_DEPOSIT'] },
+    depositProofFileKey: { type: String, select: false },
+    depositProofReference: { type: String, select: false },
     idempotencyKey: { type: String },
     requestHash: { type: String },
     customerTokenHash: { type: String, select: false },
@@ -66,6 +69,7 @@ const orderSchema = new mongoose.Schema(
       enum: [
         'NOT_REQUIRED',
         'AWAITING_DEPOSIT',
+        'AWAITING_PAYMENT',
         'PENDING_VERIFICATION',
         'VERIFIED',
         'REJECTED',
@@ -83,12 +87,17 @@ const orderSchema = new mongoose.Schema(
     inventoryCommitted: { type: Boolean },
     trackingNumber: { type: String },
     deliveryId: { type: String },
-    deliveryMethod: { type: String, enum: ['delivery', 'pickup'], default: 'delivery' },
+    deliveryMethod: {
+      type: String,
+      enum: ['delivery', 'pickup'],
+      default: 'delivery',
+      alias: 'fulfillmentMethod',
+    },
     shippingProvider: { type: String },
     // Store pickup location information
     pickupLocation: {
-      storeName: { type: String, default: 'أبوكرتونةaming Store' },
-      address: { type: String, default: '9 شارع جمال، تقسيم فريد ذكي، حدائق المعصرة، القاهرة' },
+      storeName: { type: String, default: 'أبو كرتونة' },
+      address: { type: String, default: 'القاهرة - حدائق حلوان' },
       coordinates: {
         lat: { type: Number },
         lng: { type: Number },
@@ -111,5 +120,8 @@ const orderSchema = new mongoose.Schema(
 orderSchema.index({ idempotencyKey: 1 }, { unique: true, sparse: true });
 orderSchema.index({ deliveryMethod: 1, depositStatus: 1, createdAt: -1 });
 orderSchema.index({ createdAt: -1 });
+orderSchema.virtual('remainingBalance').get(function () {
+  return this.remainingBalanceMinor == null ? undefined : this.remainingBalanceMinor / 100;
+});
 
 export const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);

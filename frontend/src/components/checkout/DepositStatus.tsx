@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { getApiUrl } from '@/lib/apiConfig';
 import { checkoutToken, formatEGP } from '@/lib/checkoutSession';
 import { depositLabels } from '@/lib/depositLabels';
-import PaymentDeposit from '@/app/checkout/components/PaymentDeposit';
+import DepositPaymentUpload from '@/app/checkout/components/PaymentDeposit';
+import Icon from '@/components/ui/AppIcon';
 interface Status {
   orderID: string;
   status: string;
@@ -12,6 +13,9 @@ interface Status {
   orderTotalMinor: number;
   depositAmountMinor: number;
   remainingBalanceMinor: number;
+  fulfillmentMethod?: 'pickup' | 'delivery';
+  depositType?: string;
+  pickupAddress?: string;
 }
 export default function DepositStatus({ orderID }: { orderID: string }) {
   const [order, setOrder] = useState<Status | null>(null);
@@ -70,6 +74,12 @@ export default function DepositStatus({ orderID }: { orderID: string }) {
               ? 'الطلب جاهز للاستلام'
               : depositLabels[order.depositStatus] || order.depositStatus}
           </p>
+          {order.fulfillmentMethod === 'pickup' && (
+            <p className="flex items-center gap-2 text-sm text-brand-500">
+              <Icon name="MapPinIcon" size={18} />
+              القاهرة - حدائق حلوان
+            </p>
+          )}
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between gap-2">
               <dt>الإجمالي</dt>
@@ -87,7 +97,9 @@ export default function DepositStatus({ orderID }: { orderID: string }) {
           {order.depositStatus === 'REJECTED' && order.status !== 'Cancelled' && (
             <>
               <p className="text-sm text-red-300">سبب الرفض: {order.depositRejectionReason}</p>
-              <PaymentDeposit
+              <DepositPaymentUpload
+                orderID={order.orderID}
+                isPickup={order.fulfillmentMethod === 'pickup'}
                 depositAmount={order.depositAmountMinor / 100}
                 onReceiptUpload={setProof}
                 receiptFile={proof}

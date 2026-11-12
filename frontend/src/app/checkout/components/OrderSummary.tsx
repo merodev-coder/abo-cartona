@@ -139,7 +139,7 @@ export default function OrderSummary({
           <div className="border-t border-border pt-2 mt-2 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-xs text-amber-400 font-bold">
-                {isPickup ? 'عربون الحجز (قيد المراجعة)' : 'عربون الشحن (قيد المراجعة)'}
+                {isPickup ? 'عربون تأكيد الحجز' : 'مصاريف التوصيل مقدماً'}
               </span>
               <span className="text-xs font-black text-amber-400">{depositAmount} جنيه</span>
             </div>

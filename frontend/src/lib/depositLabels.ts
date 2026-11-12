@@ -1,4 +1,5 @@
 export const depositLabels: Record<string, string> = {
+  AWAITING_PAYMENT: 'في انتظار دفع العربون',
   NOT_REQUIRED: 'لا يتطلب عربوناً',
   AWAITING_DEPOSIT: 'في انتظار دفع العربون',
   PENDING_VERIFICATION: 'جاري مراجعة التحويل',

@@ -5,7 +5,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 import sharp from 'sharp';
-import { S3Client } from '@aws-sdk/client-s3';
+import { UTApi } from 'uploadthing/server';
 import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import orderRoutes from '../routes/orderRoutes.js';
 import { errorHandler } from '../middleware/errorMiddleware.js';
@@ -21,11 +21,21 @@ test('isolated replica-set checkout and payment lifecycle', { timeout: 600000 },
   await mongoose.connect(database.getUri(), { dbName: 'checkout_isolated_test' });
   await Order.init();
   process.env.JWT_SECRET = 'isolated-integration-secret';
-  process.env.PROOF_S3_BUCKET = 'isolated-test';
-  process.env.AWS_ACCESS_KEY_ID = 'isolated';
-  process.env.AWS_SECRET_ACCESS_KEY = 'isolated';
+  process.env.UPLOADTHING_TOKEN = Buffer.from(
+    JSON.stringify({ apiKey: 'sk_isolated_test_key', appId: 'isolated', regions: ['iad1'] })
+  ).toString('base64');
   process.env.PAYMENT_INSTAPAY_DESTINATION = 'isolated-fixture';
-  t.mock.method(S3Client.prototype, 'send', async () => ({}));
+  let failUpload = false;
+  t.mock.method(UTApi.prototype, 'uploadFiles', async (file, options) => {
+    assert.equal(options.acl, 'private');
+    assert.equal(file.type, 'image/webp');
+    return failUpload
+      ? { error: { message: 'Private ACL unavailable' }, data: null }
+      : { error: null, data: { key: `fixture${crypto.randomBytes(8).toString('hex')}` } };
+  });
+  t.beforeEach(async () => {
+    await mongoose.connection.collection('request_limits').deleteMany({});
+  });
   const app = express();
   app.use(express.json());
   app.use('/api/orders', orderRoutes);
@@ -57,9 +67,18 @@ test('isolated replica-set checkout and payment lifecycle', { timeout: 600000 },
     'X-Checkout-Token': owner,
     'Idempotency-Key': crypto.randomUUID(),
   };
-  async function proof(token = owner, bytes = image) {
+  async function proof(token = owner, bytes = image, checkout = {}, amountMinor = 10000) {
     const form = new FormData();
     form.append('paymentMethod', 'instapay');
+    form.append(
+      'checkout',
+      JSON.stringify({
+        deliveryMethod: 'pickup',
+        items: [{ id: String(product._id), quantity: 1 }],
+        ...checkout,
+      })
+    );
+    form.append('depositAmountMinor', String(amountMinor));
     form.append('proof', new Blob([bytes], { type: 'image/png' }), 'receipt.png');
     return fetch(`${base}/proofs`, {
       method: 'POST',
@@ -74,6 +93,7 @@ test('isolated replica-set checkout and payment lifecycle', { timeout: 600000 },
     customerEmail: 'qa@example.invalid',
     items: [{ id: String(product._id), price: 650, quantity: 1 }],
     proofId,
+    depositAmountMinor: 10000,
     ...extra,
   });
   const submit = (payload, custom = headers) =>
@@ -93,6 +113,15 @@ test('isolated replica-set checkout and payment lifecycle', { timeout: 600000 },
       assert.equal((await proof(owner, Buffer.from('<script>invalid image</script>'))).status, 400);
       assert.equal((await proof(owner, Buffer.alloc(5242881))).status, 413);
     });
+    await t.test(
+      'UploadThing private upload failures cannot produce accepted evidence',
+      async () => {
+        failUpload = true;
+        assert.equal((await proof()).status, 503);
+        assert.equal(await Order.countDocuments(), 0);
+        failUpload = false;
+      }
+    );
     const upload = await proof();
     assert.equal(upload.status, 201);
     const { proofId } = await upload.json();
@@ -138,6 +167,15 @@ test('isolated replica-set checkout and payment lifecycle', { timeout: 600000 },
         assert.equal(order.depositAmountMinor, 10000);
         assert.equal(order.remainingBalanceMinor, 55000);
         assert.equal((await Product.findById(product._id)).stockCount, 2);
+        const saved = await Order.findOne({ orderID: order.orderID }).select('+depositProofFileKey +depositProofReference');
+        assert.equal(saved.depositType, 'STORE_PICKUP_DEPOSIT');
+        assert.equal(saved.fulfillmentMethod, 'pickup');
+        assert.equal(saved.deliveryFee, 0);
+        assert.equal(saved.depositAmount, 100);
+        assert.equal(saved.remainingBalance, 550);
+        assert.equal(saved.pickupLocation.address, 'القاهرة - حدائق حلوان');
+        assert.ok(saved.depositProofReference.startsWith('uploadthing:'));
+        assert.ok(saved.depositProofFileKey);
       }
     );
     await t.test('idempotent retries return one order and consume proof once', async () => {
@@ -167,6 +205,50 @@ test('isolated replica-set checkout and payment lifecycle', { timeout: 600000 },
       );
     });
     await t.test(
+      'pickup proof cannot be reused for a delivery fee, and fee tampering fails at upload',
+      async () => {
+        const fresh = (await (await proof()).json()).proofId;
+        const payload = body(fresh, {
+          deliveryMethod: 'delivery',
+          selectedShippingMethod: 'QA delivery',
+          governorate: 'QA city',
+          address: 'QA Address',
+          depositAmountMinor: 8000,
+        });
+        assert.equal(
+          (await submit(payload, { ...headers, 'Idempotency-Key': crypto.randomUUID() })).status,
+          400
+        );
+        assert.equal(
+          (
+            await proof(
+              owner,
+              image,
+              {
+                deliveryMethod: 'delivery',
+                selectedShippingMethod: 'QA delivery',
+                governorate: 'QA city',
+              },
+              10000
+            )
+          ).status,
+          400
+        );
+      }
+    );
+    await t.test('a changed delivery fee invalidates already uploaded evidence', async () => {
+      const id = (await (await proof(owner, image, { deliveryMethod: 'delivery', selectedShippingMethod: 'QA delivery', governorate: 'QA city' }, 8000)).json()).proofId;
+      await ShippingMethod.updateOne({ name: 'QA delivery' }, { $set: { 'governorates.0.cost': 70 } });
+      const result = await submit(body(id, { deliveryMethod: 'delivery', address: 'QA Address', selectedShippingMethod: 'QA delivery', governorate: 'QA city', depositAmountMinor: 7000 }), { ...headers, 'Idempotency-Key': crypto.randomUUID() });
+      assert.equal(result.status, 400);
+      await ShippingMethod.updateOne({ name: 'QA delivery' }, { $set: { 'governorates.0.cost': 80 } });
+    });
+    await t.test('equal amounts cannot hide a different fulfillment type', async () => {
+      await ShippingMethod.create({ name: 'QA same amount', governorates: [{ name: 'QA city', cost: 100 }] });
+      const id = (await (await proof()).json()).proofId;
+      assert.equal((await submit(body(id, { deliveryMethod: 'delivery', address: 'QA Address', selectedShippingMethod: 'QA same amount', governorate: 'QA city' }), { ...headers, 'Idempotency-Key': crypto.randomUUID() })).status, 400);
+    });
+    await t.test(
       'approval allocates stock exactly once; fulfillment cannot bypass review',
       async () => {
         const before = await fetch(`${base}/${order.orderID}/status`, {
@@ -190,7 +272,11 @@ test('isolated replica-set checkout and payment lifecycle', { timeout: 600000 },
       });
       assert.equal(own.status, 200);
       assert.equal(own.headers.get('cache-control'), 'no-store');
-      assert.equal(new URL((await own.json()).url).searchParams.get('X-Amz-Expires'), '60');
+      const signed = new URL((await own.json()).url);
+      assert.ok(signed.hostname.endsWith('ufs.sh'));
+      const remaining = Number(signed.searchParams.get('expires')) - Date.now();
+      assert.ok(remaining > 0 && remaining <= 61000);
+      assert.ok(signed.searchParams.get('signature'));
       assert.equal(
         (
           await fetch(`${base}/${order.orderID}/customer-proof`, {
@@ -242,11 +328,25 @@ test('isolated replica-set checkout and payment lifecycle', { timeout: 600000 },
     });
     await t.test('delivery uses configured shipping and preserves its deposit policy', async () => {
       await Product.updateOne({ _id: product._id }, { $set: { stockCount: 1 } });
-      const id = (await (await proof()).json()).proofId;
+      const id = (
+        await (
+          await proof(
+            owner,
+            image,
+            {
+              deliveryMethod: 'delivery',
+              selectedShippingMethod: 'QA delivery',
+              governorate: 'QA city',
+            },
+            8000
+          )
+        ).json()
+      ).proofId;
       const delivery = await submit(
         body(id, {
           deliveryMethod: 'delivery',
           address: 'QA Address',
+          depositAmountMinor: 8000,
           governorate: 'QA city',
           selectedShippingMethod: 'QA delivery',
         }),

@@ -52,7 +52,7 @@ test('digital capacity discount matches existing 0.5 EGP per payable GB', async 
   );
   assert.equal(quote.orderTotalMinor, 70000);
 });
-test('delivery quote reads configured governorate cost and full-payment policy', async (t) => {
+test('delivery deposit is only the configured fee even for legacy full-payment methods', async (t) => {
   t.mock.method(Product, 'find', (filter) =>
     query(
       filter._id.$in.length ? [{ _id: hardware, name: 'SSD', type: 'storage', price: 650 }] : []
@@ -72,7 +72,7 @@ test('delivery quote reads configured governorate cost and full-payment policy',
     null
   );
   assert.equal(quote.shippingMinor, 8000);
-  assert.equal(quote.depositMinor, 73000);
+  assert.equal(quote.depositMinor, 8000);
 });
 test('duplicate IDs, fractional and negative quantities cannot bypass checkout', async () => {
   for (const items of [

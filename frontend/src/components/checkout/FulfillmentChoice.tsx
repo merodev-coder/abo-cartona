@@ -53,6 +53,16 @@ export default function FulfillmentChoice({
               <span className="block text-sm text-text-secondary mt-1 leading-6">
                 {option.description}
               </span>
+              {option.id === 'pickup' && (
+                <motion.span
+                  initial={false}
+                  animate={{ opacity: value === 'pickup' ? 1 : 0.75 }}
+                  className="mt-2 flex items-center gap-1.5 text-sm text-brand-500"
+                >
+                  <Icon name="MapPinIcon" size={16} />
+                  القاهرة - حدائق حلوان
+                </motion.span>
+              )}
             </div>
           </motion.label>
         ))}

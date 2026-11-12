@@ -17,6 +17,13 @@ function normalizeOrder(order) {
     deliveryMethod: o.deliveryMethod || 'delivery',
     shippingProvider: o.shippingProvider || null,
     storageDataMapping: o.storageDataMapping || [],
+    fulfillmentMethod: o.deliveryMethod || 'delivery',
+    deliveryFee: o.shippingCost || 0,
+    depositAmount: (o.depositAmountMinor ?? (o.requiredDeposit || 0) * 100) / 100,
+    remainingBalance:
+      o.remainingBalanceMinor != null
+        ? o.remainingBalanceMinor / 100
+        : Math.max(0, o.totalPrice - (o.requiredDeposit || 0)),
   };
 }
 

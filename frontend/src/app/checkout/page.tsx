@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CartReview from './components/CartReview';
-import PaymentDeposit from './components/PaymentDeposit';
+import DepositPaymentUpload from './components/PaymentDeposit';
 import OrderSummary from './components/OrderSummary';
 import Icon from '@/components/ui/AppIcon';
 import CustomDropdown from '@/components/ui/CustomDropdown';
@@ -142,7 +142,7 @@ export default function CheckoutPage() {
   const [phone, setPhone] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
-  const [receiptFile, setReceiptFile] = useState<string | null>(null);
+  const [receipt, setReceipt] = useState<{ id: string; context: string } | null>(null);
   const [storageAssignments, setStorageAssignments] = useState<StorageAssignment[]>([]);
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
@@ -168,15 +168,14 @@ export default function CheckoutPage() {
   const activeShippingMethod = shippingMethods.find((m) => m._id === selectedMethodId);
   const activeGov = activeShippingMethod?.governorates.find((g) => g.name === selectedGovName);
 
-  const depositAmount =
-    deliveryMethod === 'pickup'
-      ? 100
-      : Math.min(
-          subtotal + shippingCost,
-          activeShippingMethod?.depositType === 'total_amount'
-            ? subtotal + shippingCost
-            : Math.max(50, shippingCost)
-        );
+  const depositAmount = deliveryMethod === 'pickup' ? 100 : shippingCost;
+  const receiptContext = `${deliveryMethod}:${Math.round(depositAmount * 100)}`;
+  useEffect(() => {
+    setReceipt((previous) => (previous?.context === receiptContext ? previous : null));
+  }, [receiptContext]);
+  const receiptFile = receipt?.context === receiptContext ? receipt.id : null;
+  const setReceiptFile = (id: string | null) =>
+    setReceipt(id ? { id, context: receiptContext } : null);
 
   const effectiveShipping = deliveryMethod === 'pickup' ? 0 : shippingCost;
 
@@ -381,6 +380,7 @@ export default function CheckoutPage() {
         items: cartItems,
         driveItems,
         proofId: receiptFile,
+        depositAmountMinor: Math.round(depositAmount * 100),
         storageDataMapping,
       });
       const res = await fetch(getApiUrl('orders'), {
@@ -830,9 +830,7 @@ export default function CheckoutPage() {
                                             <span
                                               className={`text-xs ${selectedMethodId === m._id ? 'text-brand-500' : 'text-text-muted'}`}
                                             >
-                                              {m.depositType === 'total_amount'
-                                                ? 'عربون: الإجمالي'
-                                                : 'عربون: الشحن'}
+                                              دفعة مقدمة بقيمة الشحن
                                             </span>
                                           </button>
                                         );
@@ -917,7 +915,15 @@ export default function CheckoutPage() {
                         <motion.div key="payment" {...fadeUp}>
                           <GlassCard className="p-6">
                             <SectionTitle icon="CreditCardIcon" label="دفع العربون" />
-                            <PaymentDeposit
+                            <DepositPaymentUpload
+                              key={receiptContext}
+                              checkout={{
+                                deliveryMethod,
+                                selectedShippingMethod: activeShippingMethod?.name,
+                                governorate: selectedGovName,
+                                items: cartItems,
+                                driveItems,
+                              }}
                               depositAmount={depositAmount}
                               orderTotal={subtotal + effectiveShipping}
                               isPickup={deliveryMethod === 'pickup'}
@@ -979,7 +985,7 @@ export default function CheckoutPage() {
                             ? '⚠️ أدخل العنوان'
                             : deliveryMethod === 'delivery' && !selectedGovName
                               ? '⚠️ اختر المحافظة'
-                              : deliveryMethod === 'delivery' && !receiptFile
+                              : !receiptFile
                                 ? '⚠️ ارفع إيصال الدفع'
                                 : !termsAgreed
                                   ? '⚠️ وافق على شروط الخدمة'

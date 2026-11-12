@@ -1,10 +1,16 @@
-import {
-  S3Client,
-  PutObjectCommand,
-  GetObjectCommand,
-  DeleteObjectCommand,
-} from '@aws-sdk/client-s3';
+import { S3Client, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import crypto from 'node:crypto';
+import { UTApi, UTFile } from 'uploadthing/server';
+// Reuse the store's UploadThing application. Legacy S3 support below is read/
+// cleanup only, so existing order evidence is not broken by the provider change.
+const uploadthing = () =>
+  new UTApi({
+    token:
+      process.env.UPLOADTHING_TOKEN ||
+      process.env.UPLOADTHING_SECRET ||
+      process.env.UPLOADTHING_API_KEY,
+  });
 let sharedClient;
 const client = () =>
   (sharedClient ||= new S3Client({
@@ -15,23 +21,28 @@ const client = () =>
   }));
 export const storageReady = () =>
   Boolean(
-    process.env.PROOF_S3_BUCKET &&
-    process.env.AWS_ACCESS_KEY_ID &&
-    process.env.AWS_SECRET_ACCESS_KEY
+    process.env.UPLOADTHING_TOKEN ||
+    process.env.UPLOADTHING_SECRET ||
+    process.env.UPLOADTHING_API_KEY
   );
-export async function storeProof(key, body) {
-  await client().send(
-    new PutObjectCommand({
-      Bucket: process.env.PROOF_S3_BUCKET,
-      Key: key,
-      Body: body,
-      ContentType: 'image/webp',
-      CacheControl: 'private, no-store',
-    }),
-    { abortSignal: AbortSignal.timeout(30000) }
+export async function storeProof(body) {
+  const result = await uploadthing().uploadFiles(
+    new UTFile([body], `${crypto.randomUUID()}.webp`, { type: 'image/webp' }),
+    { acl: 'private', contentDisposition: 'inline', signal: AbortSignal.timeout(60000) }
   );
+  if (result.error || !result.data?.key)
+    throw Object.assign(
+      new Error('تعذر حفظ الصورة بشكل خاص عبر UploadThing. يرجى مراجعة إعدادات الخصوصية.'),
+      { statusCode: 503 }
+    );
+  // Deliberately return a storage key, never a public CDN URL.
+  return result.data.key;
 }
 export async function proofUrl(key) {
+  if (!key.startsWith('payment-proofs/')) {
+    const result = await uploadthing().generateSignedURL(key, { expiresIn: 60 });
+    return result.ufsUrl;
+  }
   return getSignedUrl(
     client(),
     new GetObjectCommand({
@@ -43,6 +54,11 @@ export async function proofUrl(key) {
   );
 }
 export async function deleteProof(key) {
+  if (!key.startsWith('payment-proofs/')) {
+    const result = await uploadthing().deleteFiles(key);
+    if (!result.success) throw new Error('Private proof cleanup failed');
+    return;
+  }
   await client().send(new DeleteObjectCommand({ Bucket: process.env.PROOF_S3_BUCKET, Key: key }), {
     abortSignal: AbortSignal.timeout(30000),
   });

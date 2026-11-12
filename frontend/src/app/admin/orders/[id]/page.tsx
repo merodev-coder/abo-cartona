@@ -43,6 +43,7 @@ interface Order {
   capacityGB: number;
   uploadedPhotoUrl: string | null;
   depositStatus?: string;
+  depositType?: string;
   depositAmountMinor?: number;
   remainingBalanceMinor?: number;
   paymentMethod?: string;
@@ -190,6 +191,8 @@ export default function AdminOrderDetails({ params }: { params: Promise<{ id: st
                   <DepositReview
                     orderID={order.orderID}
                     depositStatus={order.depositStatus}
+                    fulfillmentMethod={order.deliveryMethod}
+                    depositType={order.depositType}
                     depositAmountMinor={order.depositAmountMinor}
                     remainingBalanceMinor={order.remainingBalanceMinor}
                     paymentMethod={order.paymentMethod}
@@ -319,17 +322,8 @@ export default function AdminOrderDetails({ params }: { params: Promise<{ id: st
                         {order.pickupLocation.storeName}
                       </p>
                       <p className="text-xs text-text-muted leading-relaxed">
-                        {order.pickupLocation.address}
+                        القاهرة - حدائق حلوان
                       </p>
-                      <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.pickupLocation.address)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 inline-flex items-center gap-1 text-xs text-brand-500 font-bold hover:underline"
-                      >
-                        <Icon name="MapIcon" size={12} />
-                        افتح في جوجل ماب
-                      </a>
                     </div>
                   </div>
 

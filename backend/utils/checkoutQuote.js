@@ -98,10 +98,7 @@ export async function checkoutQuote(body, session) {
     const gov = method?.governorates.find((g) => g.name === body.governorate);
     if (!gov) throw invalid('يرجى اختيار طريقة الشحن والمحافظة.');
     shippingMinor = minor(gov.cost);
-    depositMinor =
-      method.depositType === 'total_amount'
-        ? subtotalMinor + shippingMinor
-        : Math.max(5000, shippingMinor);
+    depositMinor = shippingMinor;
   }
   const orderTotalMinor = subtotalMinor + shippingMinor;
   if (!Number.isSafeInteger(orderTotalMinor) || orderTotalMinor < 0 || shippingMinor < 0)

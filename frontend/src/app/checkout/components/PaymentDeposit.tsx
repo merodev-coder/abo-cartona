@@ -11,13 +11,23 @@ interface Props {
   isPickup?: boolean;
   onReceiptUpload: (proofId: string | null) => void;
   receiptFile: string | null;
+  checkout?: {
+    deliveryMethod: 'pickup' | 'delivery';
+    selectedShippingMethod?: string;
+    governorate?: string;
+    items: { id: string; quantity: number; selectedBrand?: string }[];
+    driveItems?: { id: string; quantity: number }[];
+  };
+  orderID?: string;
 }
-export default function PaymentDeposit({
+export default function DepositPaymentUpload({
   depositAmount,
   orderTotal,
   isPickup = false,
   onReceiptUpload,
   receiptFile,
+  checkout,
+  orderID,
 }: Props) {
   const { data: config, isPending, isError } = usePaymentConfig();
   const methods = config?.methods || [];
@@ -27,6 +37,7 @@ export default function PaymentDeposit({
   const [error, setError] = useState('');
   const [preview, setPreview] = useState<string | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
+  const [dragging, setDragging] = useState(false);
   const request = useRef<XMLHttpRequest | null>(null);
   const selectedMethod = method || methods[0]?.id || '';
   const active = methods.find((m) => m.id === selectedMethod);
@@ -38,9 +49,18 @@ export default function PaymentDeposit({
     [preview]
   );
   const upload = (file?: File) => {
-    if (!file || progress !== null) return;
+    if (
+      !file ||
+      progress !== null ||
+      (request.current && ![0, 4].includes(request.current.readyState))
+    )
+      return;
     setError('');
     onReceiptUpload(null);
+    if (!orderID && !checkout) {
+      setError('تعذر تجهيز بيانات الدفع. يرجى تحديث الصفحة.');
+      return;
+    }
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > maxBytes) {
       setError('اختر صورة JPEG أو PNG أو WebP بحجم لا يتجاوز 5 ميجابايت.');
       return;
@@ -76,17 +96,23 @@ export default function PaymentDeposit({
     const body = new FormData();
     body.append('paymentMethod', selectedMethod);
     body.append('proof', file);
+    body.append('depositAmountMinor', String(Math.round(depositAmount * 100)));
+    if (orderID) body.append('orderID', orderID);
+    else body.append('checkout', JSON.stringify(checkout));
     xhr.send(body);
   };
   return (
     <section className="space-y-5" aria-label="إثبات دفع العربون" aria-busy={progress !== null}>
       <div className="rounded-2xl border border-brand-500/25 bg-brand-500/5 p-5 space-y-2">
         <h3 className="font-semibold text-lg">
-          {isPickup ? 'تأكيد الاستلام من المحل' : 'تأكيد دفع العربون'}
+          {isPickup ? 'عربون تأكيد الحجز' : 'دفع مصاريف التوصيل'}
         </h3>
         <p className="text-sm text-text-secondary leading-7">
-          لإتمام طلبك يرجى دفع عربون بقيمة {formatEGP(depositAmount)}. سيتم خصم العربون من إجمالي
-          الطلب وتدفع المبلغ المتبقي عند الاستلام{isPickup ? ' من المحل' : ''}.
+          {isPickup
+            ? 'يرجى تحويل 100 جنيه لتأكيد الطلب ورفع صورة التحويل.'
+            : 'يرجى تحويل قيمة مصاريف الشحن ورفع صورة إثبات التحويل لتأكيد الطلب.'}{' '}
+          سيتم خصم المبلغ المدفوع من إجمالي الطلب، والمتبقي عند{' '}
+          {isPickup ? 'الاستلام من المحل' : 'التوصيل'}.
         </p>
         <p className="text-sm text-text-muted">
           الصورة إثبات مساعد؛ يتم تأكيد التحويل بعد مراجعة المتجر.
@@ -103,8 +129,21 @@ export default function PaymentDeposit({
           </div>
         )}
         <div>
-          <dt className="text-text-muted">قيمة العربون</dt>
-          <dd className="mt-2 font-semibold text-brand-500">{formatEGP(depositAmount)}</dd>
+          <dt className="text-text-muted">
+            {isPickup ? 'قيمة العربون' : 'مصاريف التوصيل المطلوبة'}
+          </dt>
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.dd
+              key={depositAmount}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.16 }}
+              className="mt-2 font-semibold text-brand-500"
+            >
+              {formatEGP(depositAmount)}
+            </motion.dd>
+          </AnimatePresence>
         </div>
         {orderTotal !== undefined && (
           <div>
@@ -151,7 +190,23 @@ export default function PaymentDeposit({
               </p>
             </div>
           )}
-          <label className="block rounded-2xl border border-dashed border-brand-500/40 p-5 bg-surface-secondary space-y-3">
+          <label
+            onDragOver={(event) => {
+              event.preventDefault();
+              if (progress === null) setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(event) => {
+              event.preventDefault();
+              setDragging(false);
+              if (event.dataTransfer.files.length !== 1) {
+                setError('يرجى اختيار صورة واحدة فقط.');
+                return;
+              }
+              upload(event.dataTransfer.files[0]);
+            }}
+            className={`block rounded-2xl border border-dashed p-5 bg-surface-secondary space-y-3 transition-colors ${dragging ? 'border-brand-500 bg-brand-500/10' : 'border-brand-500/40'}`}
+          >
             <span className="block text-sm font-semibold">صورة إيصال التحويل</span>
             <input
               aria-describedby="proof-help proof-error"
@@ -165,7 +220,8 @@ export default function PaymentDeposit({
               className="block w-full min-w-0 text-sm file:me-3 file:rounded-lg file:border-0 file:bg-brand-500 file:p-3 file:text-slate-950"
             />
             <span id="proof-help" className="block text-xs text-text-muted">
-              JPEG، PNG أو WebP — حتى 5 ميجابايت. يمكنك اختيار صورة من الكاميرا أو المعرض.
+              اسحب الصورة هنا أو اخترها من المعرض. JPEG، PNG أو WebP — حتى 5 ميجابايت. يتم حفظها
+              بشكل خاص عبر UploadThing.
             </span>
           </label>
         </>
@@ -200,21 +256,32 @@ export default function PaymentDeposit({
           </motion.div>
         )}
       </AnimatePresence>
-      <div role="status" aria-live="polite" className="text-sm">
+      <motion.div layout role="status" aria-live="polite" className="text-sm">
         {progress !== null ? (
           <>
-            <progress max={100} value={progress} className="w-full" />
+            <progress
+              aria-label="تقدم رفع الصورة"
+              max={100}
+              value={progress}
+              className="w-full accent-emerald-400"
+            />
             {progress === 100 ? 'جاري فحص الصورة وحفظها…' : `جاري الرفع ${progress}%`}
           </>
         ) : receiptFile ? (
-          <span className="text-brand-500">
+          <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-brand-500">
             تم حفظ الصورة بأمان. ستتم مراجعة التحويل بعد إرسال الطلب.
-          </span>
+          </motion.span>
         ) : null}
-      </div>
-      <p id="proof-error" role="alert" className="text-sm text-red-300">
+      </motion.div>
+      <motion.p layout id="proof-error" role="alert" className="text-sm text-red-300">
         {error || (isError ? 'تعذر تحميل طرق الدفع. يرجى المحاولة لاحقاً.' : '')}
-      </p>
+        {!receiptFile &&
+          progress === null &&
+          !error &&
+          (isPickup
+            ? 'يرجى رفع صورة تحويل عربون الحجز بقيمة 100 جنيه.'
+            : 'يرجى رفع صورة تحويل مصاريف التوصيل لإتمام الطلب.')}
+      </motion.p>
     </section>
   );
 }

@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import { Order } from '../models/Order.js';
 import { PaymentProof } from '../models/PaymentProof.js';
 import { checkoutQuote } from '../utils/checkoutQuote.js';
-import { pickupAmounts } from '../utils/depositPolicy.js';
+import { depositRequirement, validateProofRequirement } from '../utils/depositRequirement.js';
 import { commitInventory } from '../utils/commitInventory.js';
 import { customerToken, ownerHash } from './depositController.js';
 import { sendOrderReceipt } from '../utils/emailService.js';
@@ -59,13 +59,14 @@ export async function createOrder(req, res, next) {
           statusCode: 409,
         });
       const pickup = body.deliveryMethod === 'pickup';
-      const amounts = pickup
-        ? pickupAmounts(quote.orderTotalMinor)
-        : {
-            orderTotalMinor: quote.orderTotalMinor,
-            depositAmountMinor: quote.depositMinor,
-            remainingBalanceMinor: quote.orderTotalMinor - quote.depositMinor,
-          };
+      const amounts = depositRequirement(body.deliveryMethod, quote);
+      if (
+        !Number.isSafeInteger(body.depositAmountMinor) ||
+        body.depositAmountMinor !== amounts.depositAmountMinor
+      )
+        throw Object.assign(new Error('مبلغ العربون لا يطابق المبلغ المطلوب. يرجى مراجعة الطلب.'), {
+          statusCode: 400,
+        });
       if (!mongoose.isValidObjectId(body.proofId))
         throw Object.assign(new Error('يرجى رفع إثبات دفع صالح.'), { statusCode: 400 });
       const proof = await PaymentProof.findOne({
@@ -78,6 +79,7 @@ export async function createOrder(req, res, next) {
         throw Object.assign(new Error('إثبات الدفع غير صالح أو تم استخدامه بالفعل.'), {
           statusCode: 400,
         });
+      validateProofRequirement(proof, amounts, body.deliveryMethod);
       // Pickup orders do not lock stock while evidence is unverified. Approval
       // atomically checks and commits stock. Delivery retains immediate allocation.
       if (!pickup) await commitInventory(quote.items, session);
@@ -106,6 +108,8 @@ export async function createOrder(req, res, next) {
             ...amounts,
             depositStatus: 'PENDING_VERIFICATION',
             depositProofStorageKey: proof.key,
+            depositProofFileKey: proof.key,
+            depositProofReference: `uploadthing:${proof.key}`,
             paymentMethod: proof.paymentMethod,
             depositSubmittedAt: new Date(),
             depositHistory: [{ status: 'PENDING_VERIFICATION', at: new Date(), by: 'customer' }],
@@ -140,6 +144,10 @@ export async function createOrder(req, res, next) {
           depositStatus: order.depositStatus,
           depositAmountMinor: order.depositAmountMinor,
           remainingBalanceMinor: order.remainingBalanceMinor,
+          fulfillmentMethod: order.deliveryMethod,
+          deliveryFee: order.shippingCost,
+          depositType: order.depositType,
+          pickupAddress: pickupAddress(order),
         },
       });
     if (created)
@@ -161,4 +169,8 @@ export async function createOrder(req, res, next) {
   } finally {
     await session.endSession();
   }
+}
+
+function pickupAddress(order) {
+  return order.deliveryMethod === 'pickup' ? storeConfig().address : undefined;
 }

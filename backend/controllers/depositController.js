@@ -7,6 +7,8 @@ import { validateDecision } from '../utils/depositPolicy.js';
 import { commitInventory } from '../utils/commitInventory.js';
 import { storeConfig } from '../utils/storeConfig.js';
 import { sendDepositStatusNotice } from '../utils/emailService.js';
+import { checkoutQuote } from '../utils/checkoutQuote.js';
+import { depositRequirement, validateProofRequirement } from '../utils/depositRequirement.js';
 
 export const ownerHash = (token) => crypto.createHash('sha256').update(token).digest('hex');
 export function paymentMethods() {
@@ -20,15 +22,13 @@ export function paymentMethods() {
   ].filter((method) => method.destination);
 }
 export function paymentConfig(req, res) {
-  res
-    .set('Cache-Control', 'no-store')
-    .json({
-      methods: storageReady() ? paymentMethods() : [],
-      maxBytes: Math.min(Number(process.env.PROOF_MAX_BYTES) || 5242880, 5242880),
-      pickupDeposit: 100,
-      pickupMinimum: 100,
-      store: storeConfig(),
-    });
+  res.set('Cache-Control', 'no-store').json({
+    methods: storageReady() ? paymentMethods() : [],
+    maxBytes: Math.min(Number(process.env.PROOF_MAX_BYTES) || 5242880, 5242880),
+    pickupDeposit: 100,
+    pickupMinimum: 100,
+    store: storeConfig(),
+  });
 }
 export function customerToken(req) {
   const token = req.get('X-Checkout-Token');
@@ -42,6 +42,42 @@ export async function uploadProof(req, res, next) {
     if (!paymentMethods().some((m) => m.id === req.body.paymentMethod))
       return res.status(400).json({ error: 'طريقة الدفع غير متاحة.' });
     if (!req.file) return res.status(400).json({ error: 'يرجى اختيار صورة.' });
+    let requirement;
+    let fulfillmentMethod;
+    if (req.body.orderID) {
+      const order = await Order.findOne({
+        orderID: req.body.orderID,
+        customerTokenHash: ownerHash(token),
+        depositStatus: 'REJECTED',
+        status: { $ne: 'Cancelled' },
+      });
+      if (!order) return res.status(404).json({ error: 'لا يمكن إعادة إرسال الإثبات لهذا الطلب.' });
+      fulfillmentMethod = order.deliveryMethod;
+      requirement = {
+        depositAmountMinor: order.depositAmountMinor,
+        depositType:
+          order.depositType ||
+          (fulfillmentMethod === 'pickup' ? 'STORE_PICKUP_DEPOSIT' : 'DELIVERY_FEE_DEPOSIT'),
+      };
+    } else {
+      let checkout;
+      try {
+        checkout = JSON.parse(req.body.checkout);
+      } catch {
+        return res.status(400).json({ error: 'بيانات الدفع غير صالحة.' });
+      }
+      if (!checkout || !['pickup', 'delivery'].includes(checkout.deliveryMethod))
+        return res.status(400).json({ error: 'طريقة الاستلام غير صالحة.' });
+      fulfillmentMethod = checkout.deliveryMethod;
+      requirement = depositRequirement(fulfillmentMethod, await checkoutQuote(checkout, null));
+    }
+    if (
+      !/^\d+$/.test(req.body.depositAmountMinor || '') ||
+      Number(req.body.depositAmountMinor) !== requirement.depositAmountMinor
+    )
+      return res
+        .status(400)
+        .json({ error: 'تغير المبلغ المطلوب. يرجى مراجعة رسوم الشحن والعربون قبل الرفع.' });
     let image;
     try {
       const input = sharp(req.file.buffer, { limitInputPixels: 24000000, animated: false });
@@ -56,14 +92,17 @@ export async function uploadProof(req, res, next) {
     } catch {
       return res.status(400).json({ error: 'الصورة غير صالحة. استخدم JPEG أو PNG أو WebP.' });
     }
-    const key = `payment-proofs/${crypto.randomUUID()}.webp`;
-    await storeProof(key, image);
+    const key = await storeProof(image);
     let proof;
     try {
       proof = await PaymentProof.create({
         key,
         ownerHash: ownerHash(token),
         paymentMethod: req.body.paymentMethod,
+        provider: 'uploadthing',
+        amountMinor: requirement.depositAmountMinor,
+        fulfillmentMethod,
+        depositType: requirement.depositType,
         expiresAt: new Date(Date.now() + 86400000),
       });
     } catch (error) {
@@ -140,7 +179,9 @@ export async function reviewDeposit(req, res, next) {
       if (!updated)
         throw Object.assign(new Error('تمت مراجعة التحويل بالفعل.'), { statusCode: 409 });
     });
-    res.set('Cache-Control', 'no-store').json({ depositStatus: updated.depositStatus });
+    res
+      .set('Cache-Control', 'no-store')
+      .json({ depositStatus: updated.depositStatus, depositHistory: updated.depositHistory });
     sendDepositStatusNotice(updated).catch(() =>
       console.error('[Email] Payment notification failed')
     );
@@ -159,17 +200,21 @@ export async function customerStatus(req, res, next) {
       customerTokenHash: ownerHash(token),
     }).lean();
     if (!order) return res.status(404).json({ error: 'Order not found' });
-    res
-      .set('Cache-Control', 'no-store')
-      .json({
-        orderID: order.orderID,
-        status: order.status,
-        depositStatus: order.depositStatus,
-        depositRejectionReason: order.depositRejectionReason,
-        orderTotalMinor: order.orderTotalMinor,
-        depositAmountMinor: order.depositAmountMinor,
-        remainingBalanceMinor: order.remainingBalanceMinor,
-      });
+    res.set('Cache-Control', 'no-store').json({
+      orderID: order.orderID,
+      status: order.status,
+      depositStatus: order.depositStatus,
+      depositRejectionReason: order.depositRejectionReason,
+      orderTotalMinor: order.orderTotalMinor,
+      depositAmountMinor: order.depositAmountMinor,
+      remainingBalanceMinor: order.remainingBalanceMinor,
+      fulfillmentMethod: order.deliveryMethod,
+      deliveryFee: order.shippingCost,
+      depositAmount: order.depositAmountMinor / 100,
+      depositType: order.depositType,
+      remainingBalance: order.remainingBalanceMinor / 100,
+      pickupAddress: order.deliveryMethod === 'pickup' ? storeConfig().address : undefined,
+    });
   } catch (error) {
     next(error);
   }
@@ -191,6 +236,28 @@ export async function resubmitProof(req, res, next) {
         { session, new: true }
       );
       if (!proof) throw Object.assign(new Error('إثبات الدفع غير صالح.'), { statusCode: 400 });
+      const existing = await Order.findOne({
+        orderID: req.params.id,
+        customerTokenHash: ownerHash(token),
+        depositStatus: 'REJECTED',
+        status: { $ne: 'Cancelled' },
+      }).session(session);
+      if (!existing)
+        throw Object.assign(new Error('لا يمكن إعادة إرسال الإثبات لهذا الطلب.'), {
+          statusCode: 409,
+        });
+      validateProofRequirement(
+        proof,
+        {
+          depositAmountMinor: existing.depositAmountMinor,
+          depositType:
+            existing.depositType ||
+            (existing.deliveryMethod === 'pickup'
+              ? 'STORE_PICKUP_DEPOSIT'
+              : 'DELIVERY_FEE_DEPOSIT'),
+        },
+        existing.deliveryMethod
+      );
       const order = await Order.findOneAndUpdate(
         {
           orderID: req.params.id,
@@ -202,6 +269,8 @@ export async function resubmitProof(req, res, next) {
           $set: {
             depositStatus: 'PENDING_VERIFICATION',
             depositProofStorageKey: proof.key,
+            depositProofFileKey: proof.key,
+            depositProofReference: `uploadthing:${proof.key}`,
             paymentMethod: proof.paymentMethod,
             depositSubmittedAt: new Date(),
             depositRejectionReason: null,

@@ -1375,6 +1375,9 @@ function OrdersManager({ showNotification }: { showNotification: (msg: string) =
                   <th className="text-right text-caption font-semibold text-text-muted text-text-muted p-4">
                     الإجمالي
                   </th>
+                  <th className="text-right text-caption font-semibold text-text-muted p-4">
+                    دفعة التأكيد
+                  </th>
                   <th className="text-right text-caption font-semibold text-text-muted text-text-muted p-4">
                     الحالة
                   </th>
@@ -1406,10 +1409,41 @@ function OrdersManager({ showNotification }: { showNotification: (msg: string) =
                       <p className="text-caption text-text-muted text-text-muted">
                         {order.phone || '—'}
                       </p>
+                      <p className="text-caption text-brand-500 mt-1">
+                        {order.deliveryMethod === 'pickup'
+                          ? 'استلام من المحل — القاهرة - حدائق حلوان'
+                          : 'توصيل للمنزل'}
+                      </p>
                     </td>
                     <td className="p-4">
                       <p className="text-body-sm font-bold text-brand-500">
                         {order.totalPrice?.toLocaleString('ar-EG')} جنيه
+                      </p>
+                    </td>
+                    <td className="p-4 text-caption space-y-1">
+                      <p>
+                        {order.depositType === 'STORE_PICKUP_DEPOSIT'
+                          ? 'عربون الحجز'
+                          : order.depositType === 'DELIVERY_FEE_DEPOSIT'
+                            ? 'مصاريف التوصيل'
+                            : 'دفعة سابقة'}
+                      </p>
+                      <p className="text-brand-500">
+                        {((order.depositAmountMinor || 0) / 100).toLocaleString('ar-EG')} ج.م
+                      </p>
+                      <p className="text-text-muted">
+                        المتبقي:{' '}
+                        {((order.remainingBalanceMinor || 0) / 100).toLocaleString('ar-EG')} ج.م
+                      </p>
+                      <p>
+                        {(
+                          {
+                            PENDING_VERIFICATION: 'جاري مراجعة التحويل',
+                            VERIFIED: 'تم تأكيد العربون',
+                            REJECTED: 'تم رفض إثبات الدفع',
+                            AWAITING_PAYMENT: 'في انتظار الدفع',
+                          } as Record<string, string>
+                        )[order.depositStatus] || '—'}
                       </p>
                     </td>
                     <td className="p-4">

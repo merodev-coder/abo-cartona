@@ -1,5 +1,8 @@
 # Validation record
 
+This records the previous refinement baseline. See [UNIFIED-DEPOSIT.md](UNIFIED-DEPOSIT.md)
+for the subsequent UploadThing unification and its validation results.
+
 Environment: Windows, Node 24.22.0, npm 11.19.1, Next.js 15.5.29,
 React 19.0.3, installed Microsoft Edge in headless mode, local production build.
 No production data, actual payment transfers or production deployment were used.

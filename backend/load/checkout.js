@@ -10,7 +10,7 @@ if (
   !__ENV.PAYMENT_METHOD
 )
   throw new Error(
-    'Requires isolated backend, seeded product, private test bucket, and a valid proof image. See docs.'
+    'Requires isolated backend, seeded product, private UploadThing test application, and a valid proof image. See docs.'
   );
 const image = open(__ENV.PROOF_FILE, 'b');
 export const options = {
@@ -25,13 +25,15 @@ const uuid = () =>
     .join('');
 export default function () {
   const token = uuid();
+  const pickup = Math.random() < 0.5;
+  const depositAmountMinor = pickup ? 10000 : Math.round(Number(__ENV.DELIVERY_FEE) * 100);
+  const checkout = { deliveryMethod: pickup ? 'pickup' : 'delivery', governorate: __ENV.GOVERNORATE, selectedShippingMethod: __ENV.SHIPPING_METHOD, items: [{ id: __ENV.PRODUCT_ID, quantity: 1 }] };
   const proof = http.post(
     `${base}/api/orders/proofs`,
-    { proof: http.file(image, 'receipt.png', 'image/png'), paymentMethod: __ENV.PAYMENT_METHOD },
+    { proof: http.file(image, 'receipt.png', 'image/png'), paymentMethod: __ENV.PAYMENT_METHOD, checkout: JSON.stringify(checkout), depositAmountMinor: String(depositAmountMinor) },
     { headers: { 'X-Checkout-Token': token }, tags: { journey: 'proof_upload' } }
   );
   if (!check(proof, { 'proof saved': (r) => r.status === 201 })) return;
-  const pickup = Math.random() < 0.5;
   const payload = JSON.stringify({
     deliveryMethod: pickup ? 'pickup' : 'delivery',
     customerName: 'Isolated Load Test',
@@ -42,6 +44,7 @@ export default function () {
     selectedShippingMethod: __ENV.SHIPPING_METHOD,
     items: [{ id: __ENV.PRODUCT_ID, quantity: 1, price: Number(__ENV.PRODUCT_PRICE) }],
     proofId: proof.json('proofId'),
+    depositAmountMinor,
   });
   const headers = {
     'Content-Type': 'application/json',

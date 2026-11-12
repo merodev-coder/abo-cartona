@@ -20,7 +20,10 @@ export default function PickupInfo({ className = '' }: { className?: string }) {
         <>
           <div>
             <p className="font-semibold">{store.name}</p>
-            <p className="text-sm text-text-secondary leading-7 mt-1">{store.address}</p>
+            <p className="text-sm text-brand-500 leading-7 mt-1 flex items-center gap-2">
+              <Icon name="MapPinIcon" size={18} />
+              القاهرة - حدائق حلوان
+            </p>
           </div>
           {store.hours && <p className="text-sm text-text-secondary">ساعات العمل: {store.hours}</p>}
           <div className="flex flex-wrap items-center gap-3">
@@ -29,21 +32,14 @@ export default function PickupInfo({ className = '' }: { className?: string }) {
                 {store.phone}
               </a>
             )}
-            {store.mapUrl.startsWith('https://www.google.com/maps/') && (
-              <a
-                href={store.mapUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-secondary text-sm"
-              >
-                افتح موقع المحل
-              </a>
-            )}
           </div>
         </>
       ) : (
         <p className="text-sm text-text-muted">
-          سيتم تأكيد عنوان وموعد الاستلام مع المتجر بعد مراجعة الطلب.
+          <span className="flex items-center gap-2 text-brand-500">
+            <Icon name="MapPinIcon" size={18} />
+            القاهرة - حدائق حلوان
+          </span>
         </p>
       )}
       <p className="text-sm text-brand-500 leading-7">
