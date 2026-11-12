@@ -137,11 +137,11 @@ test('configured payment cards default to Vodafone, copy the exact phone, and sw
   await expect(page.getByRole('radio', { name: /Vodafone Cash/ })).toBeChecked();
   await expect(page.getByRole('heading', { name: 'التحويل عبر فودافون كاش' })).toBeVisible();
   await expect(page.getByText('لم يضبط المتجر', { exact: false })).toHaveCount(0);
-  const number = page.locator('bdi').filter({ hasText: '+20 106 795 7449' });
+  const number = page.locator('bdi').filter({ hasText: '+201001975151' });
   await expect(number).toHaveAttribute('dir', 'ltr');
   await page.getByRole('button', { name: 'نسخ الرقم', exact: true }).click();
   await expect(page.getByRole('button', { name: 'تم نسخ الرقم', exact: true })).toBeVisible();
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('+201067957449');
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('+201001975151');
   await page.getByRole('radio', { name: /InstaPay/ }).check();
   await expect(page.getByRole('heading', { name: 'التحويل عبر إنستاباي' })).toBeVisible();
   const request = page.waitForRequest((r) => r.url().endsWith('/api/orders/proofs'));
