@@ -4,7 +4,11 @@ import { getApiUrl } from '@/lib/apiConfig';
 export interface PaymentConfig {
   methods: { id: string; code?: string; name: string; destination: string }[];
   maxBytes: number;
-  configuration?: { destinationReady: boolean; uploadReady: boolean };
+  configuration?: {
+    destinationReady: boolean;
+    uploadReady: boolean;
+    proofAcl?: 'public' | 'private';
+  };
   store?: { name: string; address: string; hours: string; phone: string; mapUrl?: string };
 }
 export function usePaymentConfig() {

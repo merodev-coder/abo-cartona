@@ -36,13 +36,19 @@ test('isolated replica-set checkout and payment lifecycle', { timeout: 600000 },
   process.env.PAYMENT_VODAFONE_ENABLED = 'false';
   let failUpload = false;
   t.mock.method(UTApi.prototype, 'uploadFiles', async (file, options) => {
-    assert.equal(options.acl, 'private');
+    assert.equal(
+      options.acl,
+      process.env.UPLOADTHING_PROOF_ACL === 'public' ? 'public-read' : 'private'
+    );
     assert.equal(file.type, 'image/webp');
     return failUpload
       ? { error: { message: 'Private ACL unavailable' }, data: null }
       : {
           error: null,
-          data: { key: `fixture${crypto.randomBytes(8).toString('hex')}` },
+          data: {
+            key: `fixture${crypto.randomBytes(8).toString('hex')}`,
+            ufsUrl: `https://test.ufs.sh/f/fixture${crypto.randomBytes(4).toString('hex')}`,
+          },
         };
   });
   t.beforeEach(async () => {
@@ -141,6 +147,7 @@ test('isolated replica-set checkout and payment lifecycle', { timeout: 600000 },
           assert.deepEqual(config.configuration, {
             destinationReady: true,
             uploadReady: false,
+            proofAcl: 'private',
           });
           process.env.UPLOADTHING_TOKEN = 'sk_invalid_raw_key';
           const invalid = await (await fetch(`${base}/payment-config`)).json();
@@ -163,7 +170,9 @@ test('isolated replica-set checkout and payment lifecycle', { timeout: 600000 },
       'UploadThing private upload failures cannot produce accepted evidence',
       async () => {
         failUpload = true;
-        assert.equal((await proof()).status, 503);
+        const failed = await proof();
+        assert.equal(failed.status, 503);
+        assert.equal((await failed.json()).code, 'UPLOADTHING_UPLOAD_FAILED');
         assert.equal(await Order.countDocuments(), 0);
         failUpload = false;
       }
@@ -574,8 +583,16 @@ test('isolated replica-set checkout and payment lifecycle', { timeout: 600000 },
         assert.equal(details.order.paymentDestination, '+20 106 795 7449');
         assert.equal(details.order.depositStatus, 'PENDING_VERIFICATION');
         assert.ok(
-          (await Order.findOne({ orderID: order.orderID }).select('+depositProofFileKey'))
-            .depositProofFileKey
+          (
+            await Order.findOne({ orderID: order.orderID }).select(
+              '+depositProofFileKey +depositProofUrl'
+            )
+          ).depositProofFileKey
+        );
+        assert.ok(
+          (
+            await Order.findOne({ orderID: order.orderID }).select('+depositProofUrl')
+          ).depositProofUrl.startsWith('https://test.ufs.sh/')
         );
       }
     );

@@ -79,7 +79,7 @@ export async function createOrder(req, res, next) {
           ownerHash: ownerHash(token),
           order: null,
           expiresAt: { $gt: new Date() },
-        }).session(session);
+      }).select('+url').session(session);
         if (!proof)
           throw Object.assign(new Error('إثبات الدفع غير صالح أو تم استخدامه بالفعل.'), {
             statusCode: 400,
@@ -115,6 +115,8 @@ export async function createOrder(req, res, next) {
             ...amounts,
             depositStatus: proof ? 'PENDING_VERIFICATION' : 'NOT_REQUIRED',
             depositProofStorageKey: proof?.key,
+            depositProofUrl: proof?.url,
+            depositProofAcl: proof?.acl || 'private',
             depositProofFileKey: proof?.key,
             depositProofReference: proof ? `uploadthing:${proof.key}` : undefined,
             paymentMethod: proof?.paymentMethod,

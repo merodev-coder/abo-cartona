@@ -133,10 +133,17 @@ export default function DepositPaymentUpload({
       if (request.current !== xhr) return;
       setProgress(null);
       try {
-        const result: { proofId?: string; error?: string } = JSON.parse(xhr.responseText);
+        const result: { proofId?: string; error?: string; code?: string } = JSON.parse(
+          xhr.responseText
+        );
         if (xhr.status >= 200 && xhr.status < 300 && result.proofId)
           onReceiptUpload(result.proofId);
-        else setError(result.error || 'تعذر رفع الصورة.');
+        else
+          setError(
+            result.code
+              ? `${result.error || 'تعذر رفع الصورة.'} (رمز: ${result.code})`
+              : result.error || 'تعذر رفع الصورة.'
+          );
       } catch {
         failed();
       }
@@ -355,6 +362,11 @@ export default function DepositPaymentUpload({
           className="rounded-xl border border-amber-400/25 p-4 text-sm text-amber-200"
         >
           خدمة رفع إثبات التحويل غير مهيأة لدى المتجر. لا تحوّل المبلغ قبل تأكيد جاهزية الخدمة.
+        </p>
+      )}
+      {config?.configuration?.proofAcl === 'public' && (
+        <p role="note" className="text-xs leading-5 text-amber-200">
+          تنبيه: رابط صورة التحويل عام؛ يمكن لأي شخص لديه الرابط الاطلاع عليها.
         </p>
       )}
       <motion.label

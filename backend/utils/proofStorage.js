@@ -40,11 +40,21 @@ export function storageReady() {
     return false;
   }
 }
+export function proofAcl() {
+  const configured = process.env.UPLOADTHING_PROOF_ACL?.trim().toLowerCase() || 'private';
+  if (configured !== 'public' && configured !== 'private')
+    throw Object.assign(new Error('UPLOADTHING_PROOF_ACL must be public or private.'), {
+      statusCode: 503,
+      diagnosticCode: 'INVALID_PROOF_ACL',
+    });
+  return { configured, uploadthing: configured === 'public' ? 'public-read' : 'private' };
+}
 export async function storeProof(body) {
+  const acl = proofAcl();
   const result = await uploadthing().uploadFiles(
     new UTFile([body], `${crypto.randomUUID()}.webp`, { type: 'image/webp' }),
     {
-      acl: 'private',
+      acl: acl.uploadthing,
       contentDisposition: 'inline',
       signal: AbortSignal.timeout(60000),
     }
@@ -52,21 +62,30 @@ export async function storeProof(body) {
   if (result.error || !result.data?.key) {
     // Render's sanitized 503 response deliberately omits provider diagnostics.
     // Log only the stable error code; never log the token, URL or file contents.
-    console.error(
-      `[UploadThing proof upload] code=${String(result.error?.code || 'MISSING_FILE_KEY')
-        .replace(/[^A-Z0-9_]/gi, '')
-        .slice(0, 64)}`
-    );
-    throw Object.assign(
-      new Error('تعذر حفظ الصورة بشكل خاص عبر UploadThing. يرجى مراجعة إعدادات الخصوصية.'),
-      { statusCode: 503 }
-    );
+    const diagnosticCode = String(
+      result.error?.code || (result.error ? 'UPLOADTHING_UPLOAD_FAILED' : 'MISSING_FILE_KEY')
+    )
+      .replace(/[^A-Z0-9_]/gi, '')
+      .slice(0, 64);
+    console.error(`[UploadThing proof upload] code=${diagnosticCode}`);
+    throw Object.assign(new Error(`تعذر حفظ الصورة عبر UploadThing (رمز ${diagnosticCode}).`), {
+      statusCode: 503,
+      diagnosticCode,
+    });
   }
-  // Deliberately return a storage key, never a public CDN URL.
-  return result.data.key;
+  return {
+    key: result.data.key,
+    url: result.data.ufsUrl,
+    acl: acl.configured,
+  };
 }
-export async function proofUrl(key) {
+export async function proofUrl(key, acl = 'private', storedUrl) {
   if (!key.startsWith('payment-proofs/')) {
+    if (acl === 'public') {
+      if (!storedUrl)
+        throw Object.assign(new Error('Public proof URL is missing.'), { statusCode: 503 });
+      return storedUrl;
+    }
     const result = await uploadthing().generateSignedURL(key, {
       expiresIn: 60,
     });

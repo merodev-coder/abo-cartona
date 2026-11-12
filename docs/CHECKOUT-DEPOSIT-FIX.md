@@ -83,3 +83,7 @@ data. No real transfer or successful live UploadThing upload is claimed. Live
 private upload and authorized signed-download verification require the store's
 configured credentials and remain deployment checks. No production data or real
 money was modified, and no scalability result is claimed by this repair.
+
+The follow-up payment-proof fix supports `UPLOADTHING_PROOF_ACL=public` for a
+free UploadThing app and `private` for paid plans. Public URLs can be opened by
+anyone who obtains them, even though order and admin pages require authentication.

@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 const schema = new mongoose.Schema(
   {
     key: { type: String, required: true, unique: true },
+    url: { type: String, select: false },
+    acl: { type: String, enum: ['public', 'private'], default: 'private' },
     ownerHash: { type: String, required: true, index: true },
     paymentMethod: { type: String, required: true },
     paymentDestination: { type: String },

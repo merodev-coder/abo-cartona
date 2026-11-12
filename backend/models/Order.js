@@ -78,6 +78,8 @@ const orderSchema = new mongoose.Schema(
       default: 'NOT_REQUIRED',
     },
     depositProofStorageKey: { type: String, select: false },
+    depositProofUrl: { type: String, select: false },
+    depositProofAcl: { type: String, enum: ['public', 'private'], default: 'private' },
     depositSubmittedAt: Date,
     depositVerifiedAt: Date,
     depositVerifiedBy: String,

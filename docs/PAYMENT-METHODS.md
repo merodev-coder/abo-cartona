@@ -1,6 +1,6 @@
 # Checkout receiving methods
 
-The existing deposit component and private UploadThing workflow are retained.
+The existing deposit component and UploadThing workflow are retained.
 The payment selector now presents Vodafone Cash and InstaPay cards, selected
 checkmarks, Arabic instructions, dynamic required amounts, and an LTR-isolated
 receiving identifier with clipboard success/failure feedback.
@@ -30,9 +30,17 @@ explicitly disabled with `PAYMENT_VODAFONE_ENABLED=false`; blank destination val
 alone no longer disable either default. Environment overrides take precedence, so
 check that any existing receiving destination matches the supplied number.
 
-The existing private UploadThing v7 token and ACL configuration are still required
-on the Express backend. Transfer details do not replace upload-service credentials.
-No live payment, account settings or production environment was changed.
+Set `UPLOADTHING_PROOF_ACL=public` on the free tier, or `private` on a paid plan.
+The backend maps these values to UploadThing v7.7.4's `public-read` and `private`
+ACL values. Public images are readable by anyone who obtains the file URL, even
+though the order dashboard itself requires admin authentication. The checkout
+shows this warning when public mode is active. Private mode uses short-lived signed
+URLs and requires a paid UploadThing plan with private files enabled. The
+server-side UploadThing token remains required in either mode. No credentials are
+exposed to the frontend. The database stores the UploadThing file key, source URL,
+and ACL on the proof and order. Admin routes remain authenticated; in public mode,
+the stored URL itself can be opened by anyone who obtains it. Public uploads are
+not private storage.
 
 ## Proof binding and order data
 

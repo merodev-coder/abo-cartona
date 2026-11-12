@@ -18,6 +18,7 @@ export function paymentConfig(req, res) {
     configuration: {
       destinationReady: paymentMethods().length > 0,
       uploadReady: storageReady(),
+      proofAcl: process.env.UPLOADTHING_PROOF_ACL?.trim().toLowerCase() || 'private',
     },
     maxBytes: Math.min(Number(process.env.PROOF_MAX_BYTES) || 5242880, 5242880),
     pickupDeposit: 100,
@@ -99,11 +100,13 @@ export async function uploadProof(req, res, next) {
     } catch {
       return res.status(400).json({ error: 'الصورة غير صالحة. استخدم JPEG أو PNG أو WebP.' });
     }
-    const key = await storeProof(image);
+    const uploaded = await storeProof(image);
     let proof;
     try {
       proof = await PaymentProof.create({
-        key,
+        key: uploaded.key,
+        url: uploaded.url,
+        acl: uploaded.acl,
         ownerHash: ownerHash(token),
         paymentMethod: paymentMethod.code,
         paymentDestination: paymentMethod.destination,
@@ -114,7 +117,7 @@ export async function uploadProof(req, res, next) {
         expiresAt: new Date(Date.now() + 86400000),
       });
     } catch (error) {
-      await deleteProof(key).catch(() => {});
+      await deleteProof(uploaded.key).catch(() => {});
       throw error;
     }
     res.status(201).set('Cache-Control', 'no-store').json({ proofId: proof._id });
@@ -124,12 +127,18 @@ export async function uploadProof(req, res, next) {
 }
 export async function viewProof(req, res, next) {
   try {
-    const order = await Order.findOne({ orderID: req.params.id }).select('+depositProofStorageKey');
+    const order = await Order.findOne({ orderID: req.params.id }).select(
+      '+depositProofStorageKey +depositProofUrl'
+    );
     if (!order?.depositProofStorageKey)
       return res.status(404).json({ error: 'لم يتم العثور على الإثبات.' });
-    res
-      .set('Cache-Control', 'no-store')
-      .json({ url: await proofUrl(order.depositProofStorageKey) });
+    res.set('Cache-Control', 'no-store').json({
+      url: await proofUrl(
+        order.depositProofStorageKey,
+        order.depositProofAcl,
+        order.depositProofUrl
+      ),
+    });
   } catch (error) {
     next(error);
   }
@@ -141,11 +150,15 @@ export async function customerProof(req, res, next) {
     const order = await Order.findOne({
       orderID: req.params.id,
       customerTokenHash: ownerHash(token),
-    }).select('+depositProofStorageKey');
+    }).select('+depositProofStorageKey +depositProofUrl');
     if (!order?.depositProofStorageKey) return res.status(404).json({ error: 'Proof not found' });
-    res
-      .set('Cache-Control', 'no-store')
-      .json({ url: await proofUrl(order.depositProofStorageKey) });
+    res.set('Cache-Control', 'no-store').json({
+      url: await proofUrl(
+        order.depositProofStorageKey,
+        order.depositProofAcl,
+        order.depositProofUrl
+      ),
+    });
   } catch (error) {
     next(error);
   }
@@ -245,7 +258,9 @@ export async function resubmitProof(req, res, next) {
         },
         { $set: { order: null } },
         { session, new: true }
-      );
+      )
+        .select('+url')
+        .session(session);
       if (!proof)
         throw Object.assign(new Error('إثبات الدفع غير صالح.'), {
           statusCode: 400,
@@ -284,6 +299,8 @@ export async function resubmitProof(req, res, next) {
           $set: {
             depositStatus: 'PENDING_VERIFICATION',
             depositProofStorageKey: proof.key,
+            depositProofUrl: proof.url,
+            depositProofAcl: proof.acl,
             depositProofFileKey: proof.key,
             depositProofReference: `uploadthing:${proof.key}`,
             paymentMethod: paymentMethod.code,

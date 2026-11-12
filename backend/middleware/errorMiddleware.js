@@ -18,5 +18,8 @@ export function errorHandler(err, req, res, next) {
       : err.code === 'LIMIT_FILE_SIZE'
         ? 'حجم الصورة يجب ألا يتجاوز 5 ميجابايت.'
         : err.message;
-  res.status(status).json({ error: message });
+  res.status(status).json({
+    error: message,
+    ...(status >= 500 && err.diagnosticCode ? { code: err.diagnosticCode } : {}),
+  });
 }
