@@ -21,13 +21,10 @@ export default function TermsOfServiceModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+
       {/* Modal */}
-      <div 
+      <div
         className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-3xl border border-white/10"
         style={{
           background: 'linear-gradient(135deg, rgba(30,41,59,0.95) 0%, rgba(15,23,42,0.98) 100%)',
@@ -46,10 +43,7 @@ export default function TermsOfServiceModal({
               <p className="text-xs text-text-muted">Terms of Service</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-xl hover:bg-white/10 transition-colors"
-          >
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-white/10 transition-colors">
             <Icon name="XMarkIcon" size={20} className="text-text-muted" />
           </button>
         </div>
@@ -63,7 +57,8 @@ export default function TermsOfServiceModal({
               <div>
                 <h3 className="text-amber-400 font-bold mb-2">تنويه هام</h3>
                 <p className="text-sm text-text-primary leading-relaxed">
-                  احنا مسؤلين مسؤليه كامله بالتعويض استبدالا في حاله ضرر المنتج اثناء الشحن ودا بيتم في مده اقصاها 14 يوم 👌
+                  احنا مسؤلين مسؤليه كامله بالتعويض استبدالا في حاله ضرر المنتج اثناء الشحن ودا بيتم
+                  في مده اقصاها 14 يوم 👌
                 </p>
                 <p className="text-sm text-red-400 mt-2 font-bold">
                   لكن علشان دا يتم حضرتك تصور فيديو للمنتج قبل فتح الكارتونه 👀
@@ -82,7 +77,9 @@ export default function TermsOfServiceModal({
                 <span className="text-brand-400 text-xs">✅</span>
               </div>
               <div>
-                <h4 className="text-sm font-bold text-text-primary">المدة التي يحتاجها العميل لإرجاع السلعة في حالة السماح بالإرجاع؟</h4>
+                <h4 className="text-sm font-bold text-text-primary">
+                  المدة التي يحتاجها العميل لإرجاع السلعة في حالة السماح بالإرجاع؟
+                </h4>
                 <p className="text-sm text-text-muted mt-1">⏺️ 3 ايام</p>
               </div>
             </div>
@@ -92,7 +89,9 @@ export default function TermsOfServiceModal({
                 <span className="text-brand-400 text-xs">✅</span>
               </div>
               <div>
-                <h4 className="text-sm font-bold text-text-primary">في أي حالة يمكن إرجاع العناصر؟</h4>
+                <h4 className="text-sm font-bold text-text-primary">
+                  في أي حالة يمكن إرجاع العناصر؟
+                </h4>
                 <p className="text-sm text-text-muted mt-1">⏺️ بنفس الحاله</p>
               </div>
             </div>
@@ -103,7 +102,9 @@ export default function TermsOfServiceModal({
               </div>
               <div>
                 <h4 className="text-sm font-bold text-text-primary">كيف سأسترد أموالي؟</h4>
-                <p className="text-sm text-text-muted mt-1">⏺️ عن طريق المحافظ الالكترونيه او التحويلات البنكيه</p>
+                <p className="text-sm text-text-muted mt-1">
+                  ⏺️ عن طريق المحافظ الالكترونيه او التحويلات البنكيه
+                </p>
               </div>
             </div>
 
@@ -112,8 +113,12 @@ export default function TermsOfServiceModal({
                 <span className="text-brand-400 text-xs">✅</span>
               </div>
               <div>
-                <h4 className="text-sm font-bold text-text-primary">هل المرتجعات مجانية أم سيتم تطبيق رسوم؟</h4>
-                <p className="text-sm text-text-muted mt-1">⏺️ رسوم الاسترجاع تختلف من مكان لاخر راسلنا واتس اب</p>
+                <h4 className="text-sm font-bold text-text-primary">
+                  هل المرتجعات مجانية أم سيتم تطبيق رسوم؟
+                </h4>
+                <p className="text-sm text-text-muted mt-1">
+                  ⏺️ رسوم الاسترجاع تختلف من مكان لاخر راسلنا واتس اب
+                </p>
               </div>
             </div>
 
@@ -123,7 +128,9 @@ export default function TermsOfServiceModal({
               </div>
               <div>
                 <h4 className="text-sm font-bold text-text-primary">كيف يعمل الاستبدال؟</h4>
-                <p className="text-sm text-text-muted mt-1">⏺️ عن طريق ارسال العميل للمنتج وارسال منتج بديل له</p>
+                <p className="text-sm text-text-muted mt-1">
+                  ⏺️ عن طريق ارسال العميل للمنتج وارسال منتج بديل له
+                </p>
               </div>
             </div>
 
@@ -132,7 +139,9 @@ export default function TermsOfServiceModal({
                 <span className="text-brand-400 text-xs">✅</span>
               </div>
               <div>
-                <h4 className="text-sm font-bold text-text-primary">المنتجات الغير قابله للارجاع؟</h4>
+                <h4 className="text-sm font-bold text-text-primary">
+                  المنتجات الغير قابله للارجاع؟
+                </h4>
                 <p className="text-sm text-text-muted mt-1">⏺️ التالفه</p>
               </div>
             </div>

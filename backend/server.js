@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import express from 'express';
+import mongoose from 'mongoose';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -27,27 +28,30 @@ import { getSubCategories, listCategories } from './controllers/categoryControll
 
 const app = express();
 
-app.set('trust proxy', 1);
+app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS) || 0);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 app.use(cors({
-  origin: true,
+  origin: (origin, callback) => {
+    const allowed = (process.env.FRONTEND_ORIGINS || 'http://localhost:4029,http://localhost:4028').split(',').map((s) => s.trim());
+    callback(null, !origin || allowed.includes(origin));
+  },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'X-Checkout-Token', 'Idempotency-Key'],
   credentials: true
 }));
 
 // 2. Security middleware (بعد الـ CORS)
 app.use(securityHeaders);
-app.use(sanitizeData);
 app.use(preventParameterPollution);
 app.use(requestLogger);
 
 // Body parsing
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '256kb' }));
+app.use(express.urlencoded({ extended: true, limit: '256kb' }));
+app.use(sanitizeData);
 
 // Rate limiting
 app.use('/api/', apiLimiter);
@@ -78,9 +82,17 @@ const port = process.env.PORT || 8080;
 
 connectDB(process.env.MONGODB_URI)
   .then(() => {
-    app.listen(port, "0.0.0.0", () => {
+    const server = app.listen(port, "0.0.0.0", () => {
       console.log(`Server is running on port ${port}`);
     });
+    server.requestTimeout = 120000;
+    server.headersTimeout = 15000;
+    const shutdown = () => {
+      const timer = setTimeout(() => process.exit(1), 30000).unref();
+      server.close(async () => { await mongoose.disconnect(); clearTimeout(timer); process.exit(0); });
+    };
+    process.once('SIGTERM', shutdown);
+    process.once('SIGINT', shutdown);
   })
   .catch((err) => {
     console.error('Failed to connect to MongoDB', err);

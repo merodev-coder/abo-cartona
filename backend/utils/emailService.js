@@ -1,6 +1,12 @@
 import { Resend } from 'resend';
 
 let resend = null;
+const escapeHtml = (value) =>
+  String(value ?? '').replace(
+    /[&<>"']/g,
+    (character) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]
+  );
 
 function getResendInstance() {
   if (!resend && process.env.RESEND_API_KEY) {
@@ -9,7 +15,31 @@ function getResendInstance() {
   return resend;
 }
 
-export async function sendOrderReceipt({ customerEmail, customerName, orderID, items, totalPrice, deliveryMethod, pickupLocation }) {
+export async function sendOrderReceipt({
+  customerEmail,
+  customerName,
+  orderID,
+  items,
+  totalPrice,
+  deliveryMethod,
+  pickupLocation,
+  depositAmountMinor,
+  remainingBalanceMinor,
+}) {
+  customerName = escapeHtml(customerName);
+  items = items.map((item) => ({
+    name: escapeHtml(item.name),
+    quantity: Number(item.quantity) || 1,
+    price: Number(item.price) || 0,
+    type: item.type,
+  }));
+  if (pickupLocation)
+    pickupLocation = Object.fromEntries(
+      ['storeName', 'address', 'workingHours', 'phone'].map((key) => [
+        key,
+        escapeHtml(pickupLocation[key]),
+      ])
+    );
   if (!process.env.RESEND_API_KEY) {
     console.warn('[Email] RESEND_API_KEY not set — skipping receipt email.');
     return;
@@ -19,7 +49,6 @@ export async function sendOrderReceipt({ customerEmail, customerName, orderID, i
     console.error('[Email] No customer email provided for order:', orderID);
     return;
   }
-
 
   // 3. فلترة العناصر (تجاهل الـ Data لو في منتجات تانية)
   const nonDataItems = items.filter((item) => item.type !== 'data');
@@ -39,7 +68,9 @@ export async function sendOrderReceipt({ customerEmail, customerName, orderID, i
     .join('');
 
   // Generate pickup information section if applicable
-  const pickupSection = deliveryMethod === 'pickup' && pickupLocation ? `
+  const pickupSection =
+    deliveryMethod === 'pickup' && pickupLocation
+      ? `
     <div style="background-color: #0a1628; border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 1px solid #1a3a5c;">
       <h4 style="color: #00d4aa; font-size: 16px; margin: 0 0 12px; display: flex; align-items: center; gap: 8px;">
         📍 معلومات الاستلام من المحل
@@ -51,7 +82,7 @@ export async function sendOrderReceipt({ customerEmail, customerName, orderID, i
         <p style="margin: 4px 0; color: #94a3b8; font-size: 13px;">📞 ${pickupLocation.phone}</p>
         <div style="margin-top: 12px; padding: 12px; background-color: #00d4aa15; border: 1px solid #00d4aa40; border-radius: 8px;">
           <p style="margin: 0; color: #00d4aa; font-size: 12px; font-weight: bold;">
-            ✅ بدون رسوم شحن • ✅ بدون عربون • ✅ الدفع عند الاستلام
+            بدون رسوم شحن • عربون الحجز 100 جنيه يخصم من الإجمالي • المتبقي عند الاستلام
           </p>
         </div>
         <a href="https://maps.google.com/?q=${pickupLocation.coordinates.lat},${pickupLocation.coordinates.lng}" 
@@ -60,7 +91,8 @@ export async function sendOrderReceipt({ customerEmail, customerName, orderID, i
         </a>
       </div>
     </div>
-  ` : '';
+  `
+      : '';
 
   const html = `
 <!DOCTYPE html>
@@ -133,18 +165,34 @@ export async function sendOrderReceipt({ customerEmail, customerName, orderID, i
     }
 
     const { error } = await resendClient.emails.send({
-      from: 'onboarding@resend.dev',
+      from: process.env.RESEND_FROM || 'onboarding@resend.dev',
       to: customerEmail,
       subject: `✅ إيصال طلبك ${orderID} — أبوكرتونة`,
-      html: html
+      html: html.replace(
+        '</body>',
+        `<p dir="rtl">حالة الدفع: جاري مراجعة التحويل. العربون: ${(depositAmountMinor || 0) / 100} جنيه. المتبقي بعد التأكيد: ${(remainingBalanceMinor || 0) / 100} جنيه.</p></body>`
+      ),
     });
-    
+
     if (error) {
       console.error('[Email] Resend error:', error.message);
     } else {
-      console.log(`[Email] Receipt sent to ${customerEmail} for order ${orderID}`);
+      console.info('[Email] Order receipt sent');
     }
   } catch (mailErr) {
     console.error('[Email] Failed to send email:', mailErr.message);
   }
+}
+
+export async function sendDepositStatusNotice(order) {
+  const client = getResendInstance();
+  if (!client || !order.customerDetails?.email) return;
+  const label = order.depositStatus === 'VERIFIED' ? 'تم تأكيد العربون' : 'تم رفض إثبات الدفع';
+  const { error } = await client.emails.send({
+    from: process.env.RESEND_FROM || 'onboarding@resend.dev',
+    to: order.customerDetails.email,
+    subject: `${label} — ${order.orderID}`,
+    html: `<div lang="ar" dir="rtl"><h2>${label}</h2><p>رقم الطلب: ${escapeHtml(order.orderID)}</p><p>${order.depositStatus === 'REJECTED' ? escapeHtml(order.depositRejectionReason) + ' — يمكنك إعادة إرسال الإثبات من صفحة طلباتك في نفس المتصفح.' : 'يرجى انتظار تأكيد موعد الاستلام من المتجر.'}</p><p>المتبقي بعد تأكيد التحويل: ${order.remainingBalanceMinor / 100} جنيه.</p></div>`,
+  });
+  if (error) throw new Error('Payment notification failed');
 }

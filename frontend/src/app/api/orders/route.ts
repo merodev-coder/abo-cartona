@@ -1,59 +1,25 @@
 import { NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db';
-import { Order } from '@/models/Order';
-import { Product } from '@/models/Product';
 
+// All order creation uses the same pricing, proof and inventory authority.
 export async function POST(req: Request) {
+  const backend = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
   try {
-    await connectDB();
-    const data = await req.json();
-
-    const {
-      orderID,
-      customerName,
-      phone,
-      address,
-      items,
-      driveItems,
-      totalPrice,
-      capacityGB,
-      uploadedPhotoUrl,
-    } = data;
-
-    if (!orderID || !items || items.length === 0) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-    }
-
-    const order = await Order.create({
-      orderID,
-      customerName,
-      phone,
-      address,
-      items,
-      driveItems: driveItems || [],
-      totalPrice: Number(totalPrice) || 0,
-      capacityGB: Number(capacityGB) || 0,
-      uploadedPhotoUrl,
-      status: 'pending',
+    const upstream = await fetch(`${backend.replace(/\/$/, '')}/api/orders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Checkout-Token': req.headers.get('X-Checkout-Token') || '',
+        'Idempotency-Key': req.headers.get('Idempotency-Key') || '',
+      },
+      body: await req.text(),
+      cache: 'no-store',
+      signal: AbortSignal.timeout(30000),
     });
-
-    // Reduce stock for each ordered item
-    const stockUpdates = (items as any[]).map((item: any) => {
-      const qty = item.quantity || 1;
-      return Product.findByIdAndUpdate(
-        item.id,
-        { $inc: { stockCount: -qty } },
-        { new: true }
-      ).catch((err: any) => {
-        console.error(`Failed to reduce stock for product ${item.id}:`, err);
-      });
+    return new NextResponse(await upstream.text(), {
+      status: upstream.status,
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
     });
-
-    await Promise.allSettled(stockUpdates);
-
-    return NextResponse.json({ ok: true, orderId: order.orderID, id: order._id });
-  } catch (error: any) {
-    console.error('Create Order Error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to create order' }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: 'تعذر الاتصال بخدمة الطلبات.' }, { status: 503 });
   }
 }

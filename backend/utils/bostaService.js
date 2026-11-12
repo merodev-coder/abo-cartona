@@ -34,23 +34,23 @@ export async function createBostaTicket(orderData) {
         address: address,
         city: extractCityFromAddress(address) || 'Cairo',
         zone: extractZoneFromAddress(address) || 'Nasr City',
-        coordinates: null
+        coordinates: null,
       },
       contactPerson: {
         name: customerName,
         phone: phone,
-        email: email || null
+        email: email || null,
       },
       notes: `Order ID: ${orderId}`,
       packageDetails: {
         size: 'MEDIUM',
         weight: 1,
-        description: 'Electronics Package'
+        description: 'Electronics Package',
       },
       cashOnDelivery: {
         amount: 0,
-        currency: 'EGP'
-      }
+        currency: 'EGP',
+      },
     };
 
     console.log('[Bosta] Creating shipment with payload:', JSON.stringify(payload, null, 2));
@@ -59,16 +59,18 @@ export async function createBostaTicket(orderData) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${BOSTA_API_KEY}`,
-        'Accept': 'application/json'
+        Authorization: `Bearer ${BOSTA_API_KEY}`,
+        Accept: 'application/json',
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       console.error('[Bosta] API Error Response:', errorData);
-      throw new Error(`Bosta API error: ${response.status} - ${errorData.message || response.statusText}`);
+      throw new Error(
+        `Bosta API error: ${response.status} - ${errorData.message || response.statusText}`
+      );
     }
 
     const bostaData = await response.json();
@@ -80,15 +82,14 @@ export async function createBostaTicket(orderData) {
       deliveryId: bostaData.id,
       trackingUrl: `https://track.bosta.co/${bostaData.trackingNumber}`,
       status: bostaData.status,
-      data: bostaData
+      data: bostaData,
     };
-
   } catch (error) {
     console.error('[Bosta] Failed to create ticket:', error.message);
     return {
       success: false,
       error: error.message,
-      data: null
+      data: null,
     };
   }
 }
@@ -100,16 +101,25 @@ export async function createBostaTicket(orderData) {
  */
 function extractCityFromAddress(address) {
   if (!address) return null;
-  
-  const cities = ['القاهرة', 'Cairo', 'الجيزة', 'Giza', 'الإسكندرية', 'Alexandria', 'أسوان', 'Aswan'];
+
+  const cities = [
+    'القاهرة',
+    'Cairo',
+    'الجيزة',
+    'Giza',
+    'الإسكندرية',
+    'Alexandria',
+    'أسوان',
+    'Aswan',
+  ];
   const lowerAddress = address.toLowerCase();
-  
+
   for (const city of cities) {
     if (lowerAddress.includes(city.toLowerCase())) {
       return city;
     }
   }
-  
+
   return null;
 }
 
@@ -120,16 +130,27 @@ function extractCityFromAddress(address) {
  */
 function extractZoneFromAddress(address) {
   if (!address) return null;
-  
-  const zones = ['نصر City', 'Nasr City', 'مصر الجديدة', 'New Cairo', 'المعادي', 'Maadi', 'الهرم', 'Giza', 'وسط البلد', 'Downtown'];
+
+  const zones = [
+    'نصر City',
+    'Nasr City',
+    'مصر الجديدة',
+    'New Cairo',
+    'المعادي',
+    'Maadi',
+    'الهرم',
+    'Giza',
+    'وسط البلد',
+    'Downtown',
+  ];
   const lowerAddress = address.toLowerCase();
-  
+
   for (const zone of zones) {
     if (lowerAddress.includes(zone.toLowerCase())) {
       return zone;
     }
   }
-  
+
   return null;
 }
 
@@ -147,9 +168,9 @@ export async function getBostaTracking(trackingNumber) {
     const response = await fetch(`${BOSTA_API_BASE_URL}/deliveries/${trackingNumber}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${BOSTA_API_KEY}`,
-        'Accept': 'application/json'
-      }
+        Authorization: `Bearer ${BOSTA_API_KEY}`,
+        Accept: 'application/json',
+      },
     });
 
     if (!response.ok) {
@@ -159,15 +180,14 @@ export async function getBostaTracking(trackingNumber) {
     const data = await response.json();
     return {
       success: true,
-      data: data
+      data: data,
     };
-
   } catch (error) {
     console.error('[Bosta] Failed to get tracking:', error.message);
     return {
       success: false,
       error: error.message,
-      data: null
+      data: null,
     };
   }
 }
@@ -180,7 +200,7 @@ export async function getBostaTracking(trackingNumber) {
 export function isBostaMethod(shippingMethod) {
   if (!shippingMethod) return false;
   const bostaVariations = ['bosta', 'بوسطة', 'Bosta', 'BOSTA'];
-  return bostaVariations.some(variation => 
+  return bostaVariations.some((variation) =>
     shippingMethod.toLowerCase().includes(variation.toLowerCase())
   );
 }

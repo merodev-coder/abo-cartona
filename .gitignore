@@ -1,9 +1,12 @@
 # Node modules
 node_modules/
-package-lock.json
 
 # Next.js build output
 .next/
+.next-qa/
+test-results/
+playwright-report/
+qa-lint.json
 out/
 
 # Production build

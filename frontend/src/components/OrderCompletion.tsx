@@ -13,23 +13,24 @@ interface OrderCompletionProps {
   totalAmount: number;
 }
 
-export default function OrderCompletion({ 
-  orderId, 
-  customerEmail, 
-  customerName, 
-  totalAmount 
+export default function OrderCompletion({
+  orderId,
+  customerEmail,
+  customerName,
+  totalAmount,
 }: OrderCompletionProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderCompleted, setOrderCompleted] = useState(false);
-  const { showEmailNotification, hideEmailNotification, isVisible, variant } = useEmailNotification();
+  const { showEmailNotification, hideEmailNotification, isVisible, variant } =
+    useEmailNotification();
 
   const handleCompleteOrder = async () => {
     setIsProcessing(true);
-    
+
     try {
       // Simulate order processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       // Show email notification after order is processed
       showEmailNotification('friendly');
       setOrderCompleted(true);
@@ -59,39 +60,38 @@ export default function OrderCompletion({
             >
               <Icon name="CheckCircleIcon" size={40} className="text-white" />
             </motion.div>
-            
+
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               {orderCompleted ? 'تم تأكيد طلبك!' : 'تأكيد الطلب'}
             </h1>
-            
+
             <p className="text-gray-600">
-              {orderCompleted 
+              {orderCompleted
                 ? 'تم إرسال تفاصيل الطلب إلى بريدك الإلكتروني'
-                : 'اضغط لتأكيد الطلب وإرسال التفاصيل إلى بريدك الإلكتروني'
-              }
+                : 'اضغط لتأكيد الطلب وإرسال التفاصيل إلى بريدك الإلكتروني'}
             </p>
           </div>
 
           {/* Order Details */}
           <div className="bg-gray-50 rounded-2xl p-6 mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">تفاصيل الطلب</h3>
-            
+
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-600">رقم الطلب:</span>
                 <span className="font-medium text-gray-900">#{orderId}</span>
               </div>
-              
+
               <div className="flex justify-between">
                 <span className="text-gray-600">العميل:</span>
                 <span className="font-medium text-gray-900">{customerName}</span>
               </div>
-              
+
               <div className="flex justify-between">
                 <span className="text-gray-600">البريد الإلكتروني:</span>
                 <span className="font-medium text-gray-900">{customerEmail}</span>
               </div>
-              
+
               <div className="flex justify-between pt-3 border-t border-gray-200">
                 <span className="text-lg font-semibold text-gray-900">الإجمالي:</span>
                 <span className="text-lg font-bold text-green-600">{totalAmount} جنيه</span>
@@ -112,7 +112,7 @@ export default function OrderCompletion({
                 <div className="flex items-center justify-center gap-3">
                   <motion.div
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                     className="w-6 h-6 border-2 border-white border-t-transparent rounded-full"
                   />
                   <span>جاري معالجة الطلب...</span>
@@ -133,7 +133,7 @@ export default function OrderCompletion({
                   إذا لم تستلم الإيميل خلال 5 دقائق، تحقق من قسم Spam
                 </p>
               </div>
-              
+
               <button
                 onClick={() => window.open('https://mail.google.com', '_blank')}
                 className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors duration-200"
@@ -162,8 +162,8 @@ export default function OrderCompletion({
       </div>
 
       {/* Email Notification Component */}
-      <EmailNotification 
-        isVisible={isVisible} 
+      <EmailNotification
+        isVisible={isVisible}
         onClose={hideEmailNotification}
         variant={variant}
         autoClose={true}

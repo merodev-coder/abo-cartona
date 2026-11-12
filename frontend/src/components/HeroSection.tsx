@@ -43,17 +43,41 @@ const categories = [
 
 const iconMap: Record<string, React.ElementType> = {
   Laptop: (props: React.SVGProps<SVGSVGElement>) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
       <path d="M20 16V7a2 2 0 00-2-2H6a2 2 0 00-2 2v9m16 0H4m16 0l1.28 2.55a1 1 0 01-.9 1.45H3.62a1 1 0 01-.9-1.45L4 16" />
     </svg>
   ),
   Zap: (props: React.SVGProps<SVGSVGElement>) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
     </svg>
   ),
   HardDrive: (props: React.SVGProps<SVGSVGElement>) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
       <line x1="22" y1="12" x2="2" y2="12" />
       <path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z" />
       <line x1="6" y1="16" x2="6.01" y2="16" />
@@ -61,7 +85,15 @@ const iconMap: Record<string, React.ElementType> = {
     </svg>
   ),
   Cpu: (props: React.SVGProps<SVGSVGElement>) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
       <rect x="4" y="4" width="16" height="16" rx="2" ry="2" />
       <rect x="9" y="9" width="6" height="6" />
       <line x1="9" y1="1" x2="9" y2="4" />
@@ -76,11 +108,7 @@ const iconMap: Record<string, React.ElementType> = {
   ),
 };
 
-const CategoryCard = memo(function CategoryCard({
-  cat,
-}: {
-  cat: (typeof categories)[number];
-}) {
+const CategoryCard = memo(function CategoryCard({ cat }: { cat: (typeof categories)[number] }) {
   const [hovered, setHovered] = useState(false);
   const IconComp = iconMap[cat.icon];
 
@@ -137,8 +165,15 @@ const CategoryCard = memo(function CategoryCard({
             </p>
           </div>
 
-          <div className="flex items-center justify-end gap-1.5 pt-1 text-[13px] font-bold" style={{ color: BRAND }}>
-            <ArrowLeft size={13} strokeWidth={2.8} className="transition-transform duration-200 group-hover:-translate-x-0.5" />
+          <div
+            className="flex items-center justify-end gap-1.5 pt-1 text-[13px] font-bold"
+            style={{ color: BRAND }}
+          >
+            <ArrowLeft
+              size={13}
+              strokeWidth={2.8}
+              className="transition-transform duration-200 group-hover:-translate-x-0.5"
+            />
             <span style={{ fontFamily: "'Noto Sans Arabic', sans-serif" }}>
               {cat.href.includes('?') ? 'تصفح' : 'اكتشف'}
             </span>
@@ -195,7 +230,8 @@ const HeroSection = memo(function HeroSection() {
               fontFamily: "'Noto Sans Arabic', 'Readex Pro', sans-serif",
             }}
           >
-            اختيارك الأول لتطوير جهازك — وحدات تخزين طيارة، رامات عالية الكفاءة للمهام الثقيلة، وأداء مظبوط على الفرازة عشان يخدم المحترفين والجيمرز بصح.
+            اختيارك الأول لتطوير جهازك — وحدات تخزين طيارة، رامات عالية الكفاءة للمهام الثقيلة،
+            وأداء مظبوط على الفرازة عشان يخدم المحترفين والجيمرز بصح.
           </p>
 
           <div className="relative">
@@ -211,7 +247,9 @@ const HeroSection = memo(function HeroSection() {
                 <span className="relative flex items-center justify-center w-8 h-8 rounded-full bg-white/14">
                   <ShoppingCart size={15} strokeWidth={2.8} />
                 </span>
-                <span style={{ fontFamily: "'Noto Sans Arabic', sans-serif" }}>تسوق القطع الآن</span>
+                <span style={{ fontFamily: "'Noto Sans Arabic', sans-serif" }}>
+                  تسوق القطع الآن
+                </span>
                 <ArrowLeft
                   size={17}
                   strokeWidth={2.5}
@@ -237,10 +275,16 @@ const HeroSection = memo(function HeroSection() {
                 { icon: '🌍', label: 'توصيل للمحافظات' },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <span className="text-base font-extrabold" style={{ color: 'rgba(203,213,225,0.9)' }}>
+                  <span
+                    className="text-base font-extrabold"
+                    style={{ color: 'rgba(203,213,225,0.9)' }}
+                  >
                     {item.icon ? item.icon : <span style={{ color: BRAND }}>{item.value}</span>}
                   </span>
-                  <span className="text-[13px] font-semibold" style={{ color: 'rgba(156,163,175,0.75)' }}>
+                  <span
+                    className="text-[13px] font-semibold"
+                    style={{ color: 'rgba(156,163,175,0.75)' }}
+                  >
                     {item.label}
                   </span>
                 </div>

@@ -38,6 +38,7 @@ import {
 import { createBostaShipment } from '../controllers/adminController.js';
 
 const router = Router();
+router.use(authMiddleware);
 
 router.get('/orders', listOrders);
 router.patch('/orders/:id', updateOrderStatus);

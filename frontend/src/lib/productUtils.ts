@@ -6,11 +6,13 @@ export const PRODUCT_IMAGE_FALLBACK =
 
 const INVALID_IMAGE_PATHS = new Set(['/placeholder.png', '/assets/images/no_image.png']);
 
-type ProductLinkSource = Pick<Product, 'slug' | 'id' | '_id'> | {
-  slug?: string;
-  id?: string;
-  _id?: string;
-};
+type ProductLinkSource =
+  | Pick<Product, 'slug' | 'id' | '_id'>
+  | {
+      slug?: string;
+      id?: string;
+      _id?: string;
+    };
 
 export function getProductHref(product: ProductLinkSource): string {
   const identifier = product.slug || product.id || product._id;

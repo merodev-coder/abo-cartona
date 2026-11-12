@@ -44,7 +44,7 @@ export default function OrderSummary({
 }: OrderSummaryProps) {
   const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const total = subtotal + shippingCost;
-  const remaining = total - depositAmount;
+  const remaining = Math.max(0, total - depositAmount);
 
   return (
     <div className="glass-card rounded-3xl p-6 sticky top-24">
@@ -78,9 +78,11 @@ export default function OrderSummary({
               </span>
             </div>
             <span className="text-xs font-bold text-text-primary flex-shrink-0">
-              {item.price * item.quantity === 0
-              ? <span className="text-brand-500 font-bold">مجاناً</span>
-              : <>{(item.price * item.quantity).toLocaleString('ar-EG')} جنيه</>}
+              {item.price * item.quantity === 0 ? (
+                <span className="text-brand-500 font-bold">مجاناً</span>
+              ) : (
+                <>{(item.price * item.quantity).toLocaleString('ar-EG')} جنيه</>
+              )}
             </span>
           </div>
         ))}
@@ -110,7 +112,9 @@ export default function OrderSummary({
               <Icon name="GiftIcon" size={14} />
               داتا مجانية مع الهارد
             </span>
-            <span className="text-sm font-bold text-green-400">-{dataDiscount.toLocaleString('ar-EG')} جنيه</span>
+            <span className="text-sm font-bold text-green-400">
+              -{dataDiscount.toLocaleString('ar-EG')} جنيه
+            </span>
           </div>
         )}
         <div className="flex items-center justify-between">
@@ -131,10 +135,12 @@ export default function OrderSummary({
             {total.toLocaleString('ar-EG')} جنيه
           </span>
         </div>
-        {!isPickup && (
+        {depositAmount > 0 && (
           <div className="border-t border-border pt-2 mt-2 space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-amber-400 font-bold">عربون الشحن (الآن)</span>
+              <span className="text-xs text-amber-400 font-bold">
+                {isPickup ? 'عربون الحجز (قيد المراجعة)' : 'عربون الشحن (قيد المراجعة)'}
+              </span>
               <span className="text-xs font-black text-amber-400">{depositAmount} جنيه</span>
             </div>
             <div className="flex items-center justify-between">
@@ -142,14 +148,6 @@ export default function OrderSummary({
               <span className="text-xs font-bold text-text-muted">
                 {remaining.toLocaleString('ar-EG')} جنيه
               </span>
-            </div>
-          </div>
-        )}
-        {isPickup && (
-          <div className="border-t border-border pt-2 mt-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-brand-500 font-bold">استلام من المحل — بدون عربون</span>
-              <span className="text-xs font-black text-brand-500">مجاناً</span>
             </div>
           </div>
         )}

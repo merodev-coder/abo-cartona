@@ -2,25 +2,28 @@ import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import mongoSanitize from 'express-mongo-sanitize';
 import hpp from 'hpp';
+import { MongoRateStore } from '../utils/MongoRateStore.js';
 
 // Rate limiting for general API
 export const apiLimiter = rateLimit({
+  store: new MongoRateStore('api'),
   windowMs: 15 * 60 * 1000, // 15 دقيقة
-  max: 100, // حد أقصى 100 طلب من كل IP
+  max: 900,
   standardHeaders: true,
   legacyHeaders: false,
   // إضافة السطر ده للتأكد من عدم حدوث الـ Error تاني
-  validate: { xForwardedForHeader: false }, 
+  validate: { xForwardedForHeader: false },
   handler: (req, res) => {
     res.status(429).json({
       error: 'Too many requests, please try again later.',
-      message: 'يا عمار، شكلك بتجرب كتير، اهدى شوية وارجع كمان 15 دقيقة!'
+      message: 'يا عمار، شكلك بتجرب كتير، اهدى شوية وارجع كمان 15 دقيقة!',
     });
-  }
+  },
 });
 
 // Stricter rate limit for auth endpoints
 export const authLimiter = rateLimit({
+  store: new MongoRateStore('auth'),
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // 5 login attempts per 15 minutes
   skipSuccessfulRequests: true,
@@ -34,16 +37,16 @@ export const securityHeaders = helmet({
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "https:", "data:", "blob:"],
-      connectSrc: ["'self'", "*"], // Allow all connections
-      fontSrc: ["'self'", "https:", "data:"],
+      imgSrc: ["'self'", 'https:', 'data:', 'blob:'],
+      connectSrc: ["'self'", '*'], // Allow all connections
+      fontSrc: ["'self'", 'https:', 'data:'],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
       frameSrc: ["'none'"],
     },
   },
   crossOriginEmbedderPolicy: false,
-  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
 });
 
 // Prevent NoSQL injection

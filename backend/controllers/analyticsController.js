@@ -2,8 +2,18 @@ import { Order } from '../models/Order.js';
 import { Product } from '../models/Product.js';
 
 const MONTHS_AR = [
-  'يناير', 'فبراير', 'مارس', 'إبريل', 'مايو', 'يونيو',
-  'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+  'يناير',
+  'فبراير',
+  'مارس',
+  'إبريل',
+  'مايو',
+  'يونيو',
+  'يوليو',
+  'أغسطس',
+  'سبتمبر',
+  'أكتوبر',
+  'نوفمبر',
+  'ديسمبر',
 ];
 
 /**
@@ -20,7 +30,7 @@ export async function getMonthlyPerformance(req, res, next) {
     // Get all completed orders for the year
     const orders = await Order.find({
       createdAt: { $gte: startOfYear, $lt: endOfYear },
-      status: { $in: ['Completed', 'Pending'] } // Include both completed and pending
+      status: { $in: ['Completed', 'Pending'] }, // Include both completed and pending
     }).lean();
 
     // Initialize monthly data structure
@@ -49,7 +59,7 @@ export async function getMonthlyPerformance(req, res, next) {
       // Calculate revenue from items (excluding shipping)
       // Note: totalPrice in order includes the product prices only (not shipping)
       const orderRevenue = order.items.reduce((sum, item) => {
-        return sum + (item.price * (item.quantity || 1));
+        return sum + item.price * (item.quantity || 1);
       }, 0);
 
       monthData.revenue += orderRevenue;
@@ -80,7 +90,7 @@ export async function getMonthlyPerformance(req, res, next) {
           existing.quantitySold += quantity;
           existing.revenue += itemRevenue;
           existing.cost += estimatedProductCost;
-          existing.profit += (itemRevenue - estimatedProductCost);
+          existing.profit += itemRevenue - estimatedProductCost;
           monthData.productProfits.set(productId, existing);
         }
       }
@@ -103,7 +113,7 @@ export async function getMonthlyPerformance(req, res, next) {
     }
 
     // Convert monthly data and add per-product audit
-    const months = monthlyData.map(month => ({
+    const months = monthlyData.map((month) => ({
       ...month,
       productAudit: Array.from(month.productProfits.entries()).map(([productId, data]) => ({
         productId,
@@ -151,7 +161,7 @@ export async function getTopSellingItems(req, res, next) {
     // Get all completed orders for the year
     const orders = await Order.find({
       createdAt: { $gte: startOfYear, $lt: endOfYear },
-      status: { $in: ['Completed', 'Pending'] }
+      status: { $in: ['Completed', 'Pending'] },
     }).lean();
 
     // Aggregate product sales
@@ -206,7 +216,7 @@ export async function getMonthlyAudit(req, res, next) {
 
     const orders = await Order.find({
       createdAt: { $gte: startOfYear, $lt: endOfYear },
-      status: { $in: ['Completed', 'Pending'] }
+      status: { $in: ['Completed', 'Pending'] },
     }).lean();
 
     const products = await Product.find().lean();
@@ -239,7 +249,7 @@ export async function getMonthlyAudit(req, res, next) {
       monthData.ordersCount++;
 
       const orderRevenue = order.items.reduce((sum, item) => {
-        return sum + (item.price * (item.quantity || 1));
+        return sum + item.price * (item.quantity || 1);
       }, 0);
 
       monthData.revenue += orderRevenue;
@@ -264,7 +274,7 @@ export async function getMonthlyAudit(req, res, next) {
           existing.quantitySold += quantity;
           existing.revenue += itemRevenue;
           existing.cost += estimatedProductCost;
-          existing.profit += (itemRevenue - estimatedProductCost);
+          existing.profit += itemRevenue - estimatedProductCost;
           monthData.productProfits.set(productId, existing);
         }
       }
@@ -279,7 +289,7 @@ export async function getMonthlyAudit(req, res, next) {
       resultMonths = [monthlyData[month - 1]];
     }
 
-    const auditData = resultMonths.map(m => ({
+    const auditData = resultMonths.map((m) => ({
       month: m.month,
       monthName: m.monthName,
       revenue: m.revenue,

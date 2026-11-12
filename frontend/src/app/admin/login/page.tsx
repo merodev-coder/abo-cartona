@@ -14,19 +14,20 @@ export default function AdminLoginPage() {
     setError(null);
     setLoading(true);
 
-    // Read credentials from .env file
-    const validUser = process.env.NEXT_PUBLIC_ADMIN_USERNAME;
-    const validPass = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
-
-    if (username === validUser && password === validPass) {
-      // Save authentication state to localStorage
+    try {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.token) throw new Error('بيانات الدخول غير صحيحة');
+      localStorage.setItem('token', result.token);
       localStorage.setItem('isAdminAuthenticated', 'true');
-      localStorage.setItem('token', 'bypass-token-for-admin');
-
-      // Instant hard redirect to admin dashboard
       window.location.href = '/admin';
-    } else {
-      setError('بيانات الدخول غير صحيحة');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'تعذر تسجيل الدخول');
+    } finally {
       setLoading(false);
     }
   };

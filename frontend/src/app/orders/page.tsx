@@ -7,12 +7,14 @@ import Footer from '@/components/Footer';
 import Icon from '@/components/ui/AppIcon';
 import WhatsAppButton from '@/components/WhatsAppButton';
 import Link from 'next/link';
+import DepositStatus from '@/components/checkout/DepositStatus';
 
 const BRAND = '#37D7AC';
 const BG = '#080C14';
 
 interface StoredOrder {
   orderId: string;
+  depositStatus?: string;
   items: Array<{
     id: string;
     name: string;
@@ -48,9 +50,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     setMounted(true);
-    const storedOrders = JSON.parse(
-      localStorage.getItem('abuKartona_userOrders') || '[]',
-    );
+    const storedOrders = JSON.parse(localStorage.getItem('abuKartona_userOrders') || '[]');
     setOrders(storedOrders);
   }, []);
 
@@ -126,9 +126,7 @@ export default function OrdersPage() {
               }}
             />
             <div>
-              <h1
-                className="text-3xl sm:text-[2rem] font-black text-white tracking-tight leading-[1.15]"
-              >
+              <h1 className="text-3xl sm:text-[2rem] font-black text-white tracking-tight leading-[1.15]">
                 طلباتك
               </h1>
               <p
@@ -170,9 +168,7 @@ export default function OrdersPage() {
               >
                 <Icon name="CubeIcon" size={22} style={{ color: BRAND, opacity: 0.5 }} />
               </div>
-              <p className="text-[14px] font-bold text-white/50 mb-2">
-                لا يوجد طلبات بعد
-              </p>
+              <p className="text-[14px] font-bold text-white/50 mb-2">لا يوجد طلبات بعد</p>
               <p className="text-[12px] mb-6" style={{ color: 'rgba(148,163,184,0.4)' }}>
                 قم بعمل طلب من صفحة الشيك آوت وسيظهر هنا
               </p>
@@ -245,6 +241,11 @@ export default function OrdersPage() {
                       </span>
                     </div>
 
+                    {order.depositStatus && (
+                      <div className="px-5">
+                        <DepositStatus orderID={order.orderId} />
+                      </div>
+                    )}
                     {/* Order body */}
                     <div className="p-5 space-y-3">
                       <div className="flex items-center justify-between text-[12px]">
@@ -281,8 +282,7 @@ export default function OrdersPage() {
                         >
                           {order.items
                             .map(
-                              (i) =>
-                                `${i.name}${i.selectedBrand ? ` (${i.selectedBrand})` : ''}`,
+                              (i) => `${i.name}${i.selectedBrand ? ` (${i.selectedBrand})` : ''}`
                             )
                             .join(' • ') || '—'}
                         </p>
@@ -302,10 +302,7 @@ export default function OrdersPage() {
                           >
                             <Icon name="GiftIcon" size={12} style={{ color: BRAND }} />
                           </div>
-                          <span
-                            className="text-[11px] font-black"
-                            style={{ color: BRAND }}
-                          >
+                          <span className="text-[11px] font-black" style={{ color: BRAND }}>
                             {order.totalGb} GB مجاناً مع الداتا
                           </span>
                         </div>

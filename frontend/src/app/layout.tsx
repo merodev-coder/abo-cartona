@@ -1,23 +1,13 @@
 import React from 'react';
 import type { Metadata, Viewport } from 'next';
-import { Readex_Pro, Noto_Sans_Arabic } from 'next/font/google';
+import { Readex_Pro } from 'next/font/google';
 import '../styles/globals.css';
 import Providers from './providers';
-import { ThemeProvider } from '@/components/ThemeProvider';
-import SmoothScrollWrapper from '@/components/SmoothScrollWrapper';
-import CustomCursor from '@/components/ui/CustomCursor';
 
 const readexPro = Readex_Pro({
   subsets: ['arabic', 'latin'],
-  weight: ['300', '400', '500', '600', '700'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-readex',
-  display: 'swap',
-});
-
-const notoSansArabic = Noto_Sans_Arabic({
-  subsets: ['arabic'],
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-arabic',
   display: 'swap',
 });
 
@@ -32,10 +22,26 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://abocartona.com'),
   title: {
     default: 'أبو كرتونة | AboCartona - متجر الهاردوير في مصر',
-    template: '%s | أبو كرتونة'
+    template: '%s | أبو كرتونة',
   },
-  description: 'أبو كرتونة - متجر متخصص في قطع الكمبيوتر والهاردوير بأفضل الأسعار في مصر. لابتوبات، SSD، HDD، رامات، إكسسوارات gaming. توصيل لجميع المحافظات.',
-  keywords: ['أبو كرتونة', 'AboCartona', 'هاردوير مصر', 'كمبيوتر جيمينج', 'SSD', 'RAM', 'بكجات تخزين', 'PC Hardware Egypt', 'Gaming PCs', 'Hardware Store Egypt', 'Laptop Egypt', 'أبو كرتونة', 'متجر هاردوير', 'قطاعات كمبيوتر'],
+  description:
+    'أبو كرتونة - متجر متخصص في قطع الكمبيوتر والهاردوير بأفضل الأسعار في مصر. لابتوبات، SSD، HDD، رامات، إكسسوارات gaming. توصيل لجميع المحافظات.',
+  keywords: [
+    'أبو كرتونة',
+    'AboCartona',
+    'هاردوير مصر',
+    'كمبيوتر جيمينج',
+    'SSD',
+    'RAM',
+    'بكجات تخزين',
+    'PC Hardware Egypt',
+    'Gaming PCs',
+    'Hardware Store Egypt',
+    'Laptop Egypt',
+    'أبو كرتونة',
+    'متجر هاردوير',
+    'قطاعات كمبيوتر',
+  ],
   authors: [{ name: 'AboCartona' }],
   creator: 'AboCartona',
   publisher: 'AboCartona',
@@ -49,14 +55,17 @@ export const metadata: Metadata = {
     locale: 'ar_EG',
     url: 'https://abocartona.com',
     title: 'أبو كرتونة | متجر الهاردوير والكمبيوتر في مصر',
-    description: 'أفضل متجر لقطع الكمبيوتر والهاردوير في مصر. لابتوبات، SSD، هارد درايف، رامات. توصيل لجميع المحافظات.',
+    description:
+      'أفضل متجر لقطع الكمبيوتر والهاردوير في مصر. لابتوبات، SSD، هارد درايف، رامات. توصيل لجميع المحافظات.',
     siteName: 'أبو كرتونة',
-    images: [{
-      url: 'https://abocartona.com/assets/images/app_logo.png',
-      width: 1200,
-      height: 630,
-      alt: 'أبو كرتونة - متجر الهاردوير والكمبيوتر في مصر',
-    }],
+    images: [
+      {
+        url: 'https://abocartona.com/assets/images/app_logo.png',
+        width: 1200,
+        height: 630,
+        alt: 'أبو كرتونة - متجر الهاردوير والكمبيوتر في مصر',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
@@ -86,8 +95,8 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://abocartona.com',
     languages: {
-      'ar': 'https://abocartona.com',
-      'en': 'https://abocartona.com',
+      ar: 'https://abocartona.com',
+      en: 'https://abocartona.com',
     },
   },
   category: 'electronics',
@@ -99,20 +108,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="ar"
-      dir="rtl"
-      className="dark"
-      suppressHydrationWarning
-    >
-      <body
-        className={`${readexPro.variable} ${notoSansArabic.variable} font-['Noto_Sans_Arabic'] bg-base text-text-primary antialiased`}
-      >
-        <ThemeProvider>
-          <SmoothScrollWrapper>
-            <Providers>{children}</Providers>
-          </SmoothScrollWrapper>
-        </ThemeProvider>
+    <html lang="ar" dir="rtl" className="dark" data-theme="normal" suppressHydrationWarning>
+      <body className={`${readexPro.variable} font-readex bg-base text-text-primary antialiased`}>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

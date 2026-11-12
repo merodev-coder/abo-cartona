@@ -1,11 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    distDir: process.env.NEXT_DIST_DIR || '.next',
     // 1. تجاهل أخطاء الـ ESLint والـ TypeScript أثناء الـ Build عشان يخلص فوراً
     eslint: {
-        ignoreDuringBuilds: true,
+        ignoreDuringBuilds: false,
     },
     typescript: {
-        ignoreBuildErrors: true,
+        ignoreBuildErrors: false,
     },
 
     // 2. الـ API rewrites لربط الـ Frontend بالـ Backend
@@ -21,7 +22,7 @@ const nextConfig = {
     
     // Image optimization
     images: {
-        unoptimized: true,
+        unoptimized: false,
         formats: ['image/webp', 'image/avif'],
         deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
         imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
@@ -64,7 +65,7 @@ const nextConfig = {
                 headers: [
                     {
                         key: 'Cache-Control',
-                        value: 'public, max-age=60, stale-while-revalidate=300',
+                        value: 'private, no-store',
                     },
                 ],
             },

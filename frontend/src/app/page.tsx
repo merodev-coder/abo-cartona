@@ -1,13 +1,6 @@
 'use client';
 
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  memo,
-  Suspense,
-} from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo, Suspense } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Header from '@/components/Header';
@@ -202,7 +195,11 @@ const SectionWrapper = memo(function SectionWrapper({
   sectionIndex?: number;
 }) {
   const glowPosition =
-    glowSide === 'left' ? 'left-[-180px]' : glowSide === 'right' ? 'right-[-180px]' : 'left-1/2 -translate-x-1/2';
+    glowSide === 'left'
+      ? 'left-[-180px]'
+      : glowSide === 'right'
+        ? 'right-[-180px]'
+        : 'left-1/2 -translate-x-1/2';
 
   return (
     <section className={`relative ${className}`}>
@@ -228,7 +225,6 @@ const SectionWrapper = memo(function SectionWrapper({
   );
 });
 
-
 /* ────────── Error state ────────── */
 
 const ErrorState = memo(function ErrorState({ message }: { message: string }) {
@@ -242,7 +238,11 @@ const ErrorState = memo(function ErrorState({ message }: { message: string }) {
             border: `1px solid rgba(${BRAND_GREEN_RGB},0.15)`,
           }}
         >
-          <Icon name="ExclamationTriangleIcon" size={28} style={{ color: BRAND_GREEN, opacity: 0.7 }} />
+          <Icon
+            name="ExclamationTriangleIcon"
+            size={28}
+            style={{ color: BRAND_GREEN, opacity: 0.7 }}
+          />
         </div>
         <p className="text-slate-400 text-sm mb-5">{message}</p>
         <button
@@ -299,7 +299,7 @@ export default function HomePage() {
     (product: Product) => {
       addToCart({ ...product, createdAt: '', updatedAt: '' } as Product);
     },
-    [addToCart],
+    [addToCart]
   );
 
   const filteredProducts = useMemo(
@@ -310,7 +310,7 @@ export default function HomePage() {
       accessories: products.filter((p) => p.type === 'accessories').slice(0, MAX_ITEMS_PER_SECTION),
       storage: products.filter((p) => p.type === 'storage').slice(0, MAX_ITEMS_PER_SECTION),
     }),
-    [products],
+    [products]
   );
 
   if (error) return <ErrorState message={error} />;
@@ -343,7 +343,13 @@ export default function HomePage() {
                       accent="مجانية مع الهارد"
                       href="/products?cat=data"
                     />
-                    <LazyProductGrid items={filteredProducts.data} onAddToCart={handleAddToCart} columns={4} forceLazy={true} eagerCount={2} />
+                    <LazyProductGrid
+                      items={filteredProducts.data}
+                      onAddToCart={handleAddToCart}
+                      columns={4}
+                      forceLazy={true}
+                      eagerCount={2}
+                    />
                   </SectionWrapper>
                   <SectionDivider />
                 </>
@@ -371,7 +377,13 @@ export default function HomePage() {
                       accent="أبو كرتونة"
                       href="/sales"
                     />
-                    <LazyProductGrid items={filteredProducts.sales} onAddToCart={handleAddToCart} columns={4} forceLazy={true} eagerCount={2} />
+                    <LazyProductGrid
+                      items={filteredProducts.sales}
+                      onAddToCart={handleAddToCart}
+                      columns={4}
+                      forceLazy={true}
+                      eagerCount={2}
+                    />
                   </SectionWrapper>
                   <SectionDivider />
                 </>
@@ -395,7 +407,13 @@ export default function HomePage() {
                   href="/products?cat=laptops"
                 />
                 {filteredProducts.laptops.length > 0 ? (
-                  <LazyProductGrid items={filteredProducts.laptops} onAddToCart={handleAddToCart} columns={4} forceLazy={true} eagerCount={2} />
+                  <LazyProductGrid
+                    items={filteredProducts.laptops}
+                    onAddToCart={handleAddToCart}
+                    columns={4}
+                    forceLazy={true}
+                    eagerCount={2}
+                  />
                 ) : (
                   <EnhancedEmptySection
                     message="لا توجد لابتوبات متاحة حالياً"
@@ -415,7 +433,13 @@ export default function HomePage() {
                   href="/products?cat=accessories"
                 />
                 {filteredProducts.accessories.length > 0 ? (
-                  <LazyProductGrid items={filteredProducts.accessories} onAddToCart={handleAddToCart} columns={4} forceLazy={true} eagerCount={2} />
+                  <LazyProductGrid
+                    items={filteredProducts.accessories}
+                    onAddToCart={handleAddToCart}
+                    columns={4}
+                    forceLazy={true}
+                    eagerCount={2}
+                  />
                 ) : (
                   <EnhancedEmptySection
                     message="لا توجد إكسسوارات متاحة حالياً"

@@ -3,7 +3,11 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { ProductType } from '@/lib/productSchema';
-import { getTotalStorageWithAggregation, createStorageSummary, calculateCartTotals } from '@/lib/storageUtils';
+import {
+  getTotalStorageWithAggregation,
+  createStorageSummary,
+  calculateCartTotals,
+} from '@/lib/storageUtils';
 import { getApiUrl, getAdminApiUrl } from '@/lib/apiConfig';
 
 export type Tag = { id: string; name: string; slug: string };
@@ -211,7 +215,9 @@ export const useStore = create<StoreState & StoreActions>()(
       },
 
       clearTags: () => {
-        set((state) => ({ filters: { ...state.filters, tags: [], subtype: '', priceRange: [0, 50000] } }));
+        set((state) => ({
+          filters: { ...state.filters, tags: [], subtype: '', priceRange: [0, 50000] },
+        }));
         get().fetchProducts({
           searchQuery: get().filters.searchQuery,
           category: get().filters.category,
@@ -236,16 +242,16 @@ export const useStore = create<StoreState & StoreActions>()(
         // For storage products, check for existing items with same model and storage capacity
         if (product.type === 'storage') {
           const existing = get().cartItems.find(
-            (p) => 
-              p.id === product.id && 
+            (p) =>
+              p.id === product.id &&
               (p.selectedBrand || '') === (product.selectedBrand || '') &&
               p.storageCapacity === product.storageCapacity
           );
-          
+
           if (existing) {
             set((state) => ({
               cartItems: state.cartItems.map((p) =>
-                p.id === product.id && 
+                p.id === product.id &&
                 (p.selectedBrand || '') === (product.selectedBrand || '') &&
                 p.storageCapacity === product.storageCapacity
                   ? { ...p, quantity: (p.quantity || 1) + 1 }
@@ -259,7 +265,7 @@ export const useStore = create<StoreState & StoreActions>()(
           const existing = get().cartItems.find(
             (p) => p.id === product.id && (p.selectedBrand || '') === (product.selectedBrand || '')
           );
-          
+
           if (existing) {
             set((state) => ({
               cartItems: state.cartItems.map((p) =>
@@ -294,7 +300,10 @@ export const useStore = create<StoreState & StoreActions>()(
         const capacityGB = get()
           .cartItems.filter((p) => p.type === 'storage')
           .reduce((acc, p) => acc + (p.storageCapacity || 0) * ((p as any).quantity || 1), 0);
-        const usedGB = get().driveItems.reduce((acc, p) => acc + (p.storageCapacity || 0) * ((p as any).quantity || 1), 0);
+        const usedGB = get().driveItems.reduce(
+          (acc, p) => acc + (p.storageCapacity || 0) * ((p as any).quantity || 1),
+          0
+        );
         const nextSize = product.storageCapacity || 0;
         if (capacityGB > 0 && usedGB + nextSize > capacityGB) {
           return { ok: false, reason: 'EXCEEDED_CAPACITY' };

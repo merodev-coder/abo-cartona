@@ -2,6 +2,81 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Shared storefront tokens. Readex Pro supports Arabic and Latin with a single
+   self-hosted next/font family and no render-blocking CSS font requests. */
+:root {
+  --color-surface: #101725;
+  --color-surface-secondary: #151e2e;
+  --color-surface-tertiary: #1d293b;
+  --color-surface-elevated: #202c3e;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --radius-control: 12px;
+  --radius-panel: 20px;
+  --motion-micro: 140ms;
+  --motion-control: 200ms;
+  --shadow-panel: 0 12px 36px rgb(0 0 0 / 18%);
+  color-scheme: dark;
+}
+
+html {
+  scroll-padding-top: 6rem;
+}
+body {
+  line-height: 1.85;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+button,
+a,
+input,
+textarea,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+:where(button, a, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-brand, #37d7ac);
+  outline-offset: 4px;
+}
+.selection-card:focus-within {
+  outline: 2px solid #37d7ac;
+  outline-offset: 4px;
+}
+:lang(ar) :is(h1, h2, h3, h4, p, label, button) {
+  letter-spacing: normal;
+}
+:is(h1, h2, h3, h4) {
+  text-wrap: balance;
+}
+p {
+  overflow-wrap: break-word;
+}
+:is(input, textarea, select) {
+  min-width: 0;
+}
+input:is([type='email'], [type='tel']) {
+  direction: ltr;
+  text-align: start;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 @layer base {
   :root {
     --color-base: #080c14;
@@ -11,7 +86,6 @@
     --color-text-primary: #ffffff;
     --color-text-secondary: #cbd5e1;
     --color-text-muted: #94a3b8;
-    --font-readex: 'Readex Pro', sans-serif;
   }
 
   body {
@@ -62,11 +136,13 @@
 
   /* Buttons */
   .btn-primary {
-    @apply bg-brand hover:bg-brand/90 text-white font-semibold py-3 px-8 rounded-pill transition-all duration-300 shadow-btn hover:shadow-glow-md hover:scale-105;
+    @apply bg-brand hover:bg-brand/90 text-slate-950 font-semibold py-3 px-6 rounded-xl transition-colors duration-200 shadow-btn;
+    min-height: 48px;
   }
 
   .btn-secondary {
-    @apply glass hover:bg-surface-hover text-text-primary font-semibold py-3 px-8 rounded-pill border border-border transition-all duration-300 hover:shadow-glow-sm hover:scale-105;
+    @apply bg-surface-secondary hover:bg-surface-hover text-text-primary font-semibold py-3 px-6 rounded-xl border border-border transition-colors duration-200;
+    min-height: 44px;
   }
 
   .btn-outline {
@@ -385,7 +461,9 @@
 
   /* Reduce motion for accessibility */
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
+    *,
+    *::before,
+    *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
@@ -394,18 +472,33 @@
 
   /* GPU-accelerated CSS animations (replaces JS/Framer Motion where possible) */
   @keyframes ambient-float {
-    0%, 100% { transform: translateY(0) scale(1); }
-    50% { transform: translateY(-20px) scale(1.05); }
+    0%,
+    100% {
+      transform: translateY(0) scale(1);
+    }
+    50% {
+      transform: translateY(-20px) scale(1.05);
+    }
   }
 
   @keyframes shimmer-sweep {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
   }
 
   @keyframes fade-up {
-    from { opacity: 0; transform: translateY(24px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .product-card-enter {
@@ -416,7 +509,12 @@
   }
 
   @keyframes slow-ping {
-    0%, 100% { opacity: 0.4; }
-    50% { opacity: 0.8; }
+    0%,
+    100% {
+      opacity: 0.4;
+    }
+    50% {
+      opacity: 0.8;
+    }
   }
 }

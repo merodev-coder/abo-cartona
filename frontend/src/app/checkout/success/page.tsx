@@ -8,6 +8,7 @@ import WhatsAppButton from '@/components/WhatsAppButton';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import DepositStatus from '@/components/checkout/DepositStatus';
 
 const BRAND = '#37D7AC';
 const BRAND_RGB = '55, 215, 172';
@@ -50,17 +51,16 @@ function SuccessContent() {
           </div>
         </div>
 
-        <h2
-          className="text-3xl font-black mb-3 leading-tight"
-          style={{ color: '#FFFFFF' }}
-        >
-          تم تأكيد أوردرك!
+        <h2 className="text-3xl font-black mb-3 leading-tight" style={{ color: '#FFFFFF' }}>
+          تم استلام طلبك!
         </h2>
         <p className="text-[13px] leading-[1.85] mb-8" style={{ color: 'rgba(148,163,184,0.6)' }}>
-          أوردرك اتأكد وبيتجهز دلوقتي. هنتواصل معاك على الموبايل في أقرب وقت لتحديد موعد التوصيل.
+          تم استلام طلبك وإثبات التحويل. يجري مراجعة الدفع قبل تأكيد تجهيز الطلب. هنتواصل معاك على
+          الموبايل لاستكمال التفاصيل.
         </p>
       </motion.div>
 
+      <DepositStatus orderID={orderId} />
       {/* Email notification */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -82,12 +82,13 @@ function SuccessContent() {
           <Icon name="EnvelopeIcon" size={20} style={{ color: BRAND }} />
         </div>
         <div>
-          <h4 className="text-[13px] font-black text-white mb-1">
-            تفقد بريدك الإلكتروني!
-          </h4>
+          <h4 className="text-[13px] font-black text-white mb-1">تفقد بريدك الإلكتروني!</h4>
           <p className="text-[11px] leading-[1.8]" style={{ color: 'rgba(148,163,184,0.6)' }}>
             بعتنا لك فاتورة الأوردر وتفاصيل ملفات الداتا. لو مش لاقيها، بص بصه سريعة في الـ{' '}
-            <span className="font-black" style={{ color: BRAND }}>Spam</span>.
+            <span className="font-black" style={{ color: BRAND }}>
+              Spam
+            </span>
+            .
           </p>
         </div>
         {/* Decorative glow */}
@@ -136,10 +137,7 @@ function SuccessContent() {
               {orderId}
             </span>
           </div>
-          <div
-            className="h-px w-full"
-            style={{ background: 'rgba(255,255,255,0.04)' }}
-          />
+          <div className="h-px w-full" style={{ background: 'rgba(255,255,255,0.04)' }} />
           <div className="flex items-center justify-between">
             <span className="text-[12px] font-medium" style={{ color: 'rgba(148,163,184,0.6)' }}>
               إجمالي الأوردر
@@ -148,10 +146,7 @@ function SuccessContent() {
               {Number(total).toLocaleString('ar-EG')} جنيه
             </span>
           </div>
-          <div
-            className="h-px w-full"
-            style={{ background: 'rgba(255,255,255,0.04)' }}
-          />
+          <div className="h-px w-full" style={{ background: 'rgba(255,255,255,0.04)' }} />
           <div className="flex items-center justify-between">
             <span className="text-[12px] font-medium" style={{ color: 'rgba(148,163,184,0.6)' }}>
               العربون المدفوع
@@ -164,10 +159,7 @@ function SuccessContent() {
               {deposit} جنيه
             </span>
           </div>
-          <div
-            className="h-px w-full"
-            style={{ background: 'rgba(255,255,255,0.04)' }}
-          />
+          <div className="h-px w-full" style={{ background: 'rgba(255,255,255,0.04)' }} />
           <div className="flex items-center justify-between">
             <span className="text-[12px] font-medium" style={{ color: 'rgba(148,163,184,0.6)' }}>
               ملفات الداتا
@@ -245,9 +237,7 @@ export default function CheckoutSuccessPage() {
       </div>
 
       <Header />
-      <main
-        className="relative z-10 flex-1 flex items-center justify-center px-4 py-24 mt-14"
-      >
+      <main className="relative z-10 flex-1 flex items-center justify-center px-4 py-24 mt-14">
         <Suspense
           fallback={
             <div className="flex flex-col items-center gap-4">

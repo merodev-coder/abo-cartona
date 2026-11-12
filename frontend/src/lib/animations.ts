@@ -3,7 +3,7 @@
  * All values are tuned for 60fps on mid-range mobile hardware.
  */
 
-import { Variants, Transition, AnimationControls } from 'framer-motion';
+import { Variants, Transition } from 'framer-motion';
 
 // ─── Spring Configs ──────────────────────────────────────────────────────────
 

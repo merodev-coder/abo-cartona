@@ -9,7 +9,11 @@ export async function connectDB(mongoUri) {
     // Connect with timeout to prevent hanging
     await mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 5000, // 5 second timeout
+      maxPoolSize: Number(process.env.MONGO_MAX_POOL_SIZE) || 30,
+      minPoolSize: 2,
+      waitQueueTimeoutMS: 5000,
     });
+    await mongoose.connection.collection('request_limits').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
     
     console.log('✅ Successfully connected to MongoDB Atlas');
     
@@ -33,7 +37,7 @@ export async function connectDB(mongoUri) {
     console.warn('⚠️ Continuing without database - server will run in limited mode');
     console.log('📝 Reminder: Go to MongoDB Atlas Dashboard -> Network Access and set it to "Allow Access From Anywhere (0.0.0.0/0)" so Render\'s dynamic IPs can connect');
     
-    // Don't throw the error, just log it and continue
+    throw error;
     // This allows the server to start for testing purposes
   }
 }

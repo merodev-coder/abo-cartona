@@ -31,7 +31,10 @@ interface DeliveryOptionsProps {
   orderSubtotal?: number;
 }
 
-export default function DeliveryOptions({ onDeliveryChange, orderSubtotal = 0 }: DeliveryOptionsProps) {
+export default function DeliveryOptions({
+  onDeliveryChange,
+  orderSubtotal = 0,
+}: DeliveryOptionsProps) {
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
   const [methods, setMethods] = useState<ShippingMethodData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,15 +58,25 @@ export default function DeliveryOptions({ onDeliveryChange, orderSubtotal = 0 }:
   const shippingCost = deliveryType === 'pickup' ? 0 : selectedGov?.cost || 0;
 
   const calcDeposit = () => {
-    if (deliveryType === 'pickup') return 50;
+    if (deliveryType === 'pickup') return 100;
     if (!selectedMethod || !selectedGov) return 50;
     return selectedMethod.depositType === 'total_amount'
       ? orderSubtotal + shippingCost
       : Math.max(50, shippingCost);
   };
 
-  const notify = (type: 'delivery' | 'pickup', govName: string, cost: number, method?: ShippingMethodData) => {
-    const deposit = type === 'pickup' ? 50 : method?.depositType === 'total_amount' ? orderSubtotal + cost : Math.max(50, cost);
+  const notify = (
+    type: 'delivery' | 'pickup',
+    govName: string,
+    cost: number,
+    method?: ShippingMethodData
+  ) => {
+    const deposit =
+      type === 'pickup'
+        ? 100
+        : method?.depositType === 'total_amount'
+          ? orderSubtotal + cost
+          : Math.max(50, cost);
     onDeliveryChange(type, govName, cost, undefined, method?.name, method?.depositType, deposit);
   };
 
@@ -95,11 +108,23 @@ export default function DeliveryOptions({ onDeliveryChange, orderSubtotal = 0 }:
           onClick={() => handleDeliveryTypeChange('delivery')}
           className={`p-4 rounded-2xl border transition-all text-right ${deliveryType === 'delivery' ? 'border-brand-500 bg-brand-500/10' : 'border-border bg-surface-secondary hover:border-border-light'}`}
         >
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${deliveryType === 'delivery' ? 'bg-brand-500/20' : 'bg-surface-tertiary'}`}>
-            <Icon name="TruckIcon" size={20} className={deliveryType === 'delivery' ? 'text-brand-500' : 'text-text-muted'} />
+          <div
+            className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${deliveryType === 'delivery' ? 'bg-brand-500/20' : 'bg-surface-tertiary'}`}
+          >
+            <Icon
+              name="TruckIcon"
+              size={20}
+              className={deliveryType === 'delivery' ? 'text-brand-500' : 'text-text-muted'}
+            />
           </div>
-          <p className={`text-sm font-black ${deliveryType === 'delivery' ? 'text-text-primary' : 'text-text-muted'}`}>توصيل للبيت</p>
-          <p className={`text-xs mt-1 ${deliveryType === 'delivery' ? 'text-brand-500' : 'text-text-secondary'}`}>
+          <p
+            className={`text-sm font-black ${deliveryType === 'delivery' ? 'text-text-primary' : 'text-text-muted'}`}
+          >
+            توصيل للبيت
+          </p>
+          <p
+            className={`text-xs mt-1 ${deliveryType === 'delivery' ? 'text-brand-500' : 'text-text-secondary'}`}
+          >
             {selectedGov && deliveryType === 'delivery' ? `${shippingCost} جنيه` : 'حسب المحافظة'}
           </p>
         </button>
@@ -108,11 +133,25 @@ export default function DeliveryOptions({ onDeliveryChange, orderSubtotal = 0 }:
           onClick={() => handleDeliveryTypeChange('pickup')}
           className={`p-4 rounded-2xl border transition-all text-right ${deliveryType === 'pickup' ? 'border-brand-500 bg-brand-500/10' : 'border-border bg-surface-secondary hover:border-border-light'}`}
         >
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${deliveryType === 'pickup' ? 'bg-brand-500/20' : 'bg-surface-tertiary'}`}>
-            <Icon name="BuildingStorefrontIcon" size={20} className={deliveryType === 'pickup' ? 'text-brand-500' : 'text-text-muted'} />
+          <div
+            className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${deliveryType === 'pickup' ? 'bg-brand-500/20' : 'bg-surface-tertiary'}`}
+          >
+            <Icon
+              name="BuildingStorefrontIcon"
+              size={20}
+              className={deliveryType === 'pickup' ? 'text-brand-500' : 'text-text-muted'}
+            />
           </div>
-          <p className={`text-sm font-black ${deliveryType === 'pickup' ? 'text-text-primary' : 'text-text-muted'}`}>استلام من المحل</p>
-          <p className={`text-xs mt-1 font-bold ${deliveryType === 'pickup' ? 'text-brand-500' : 'text-text-secondary'}`}>مجاناً</p>
+          <p
+            className={`text-sm font-black ${deliveryType === 'pickup' ? 'text-text-primary' : 'text-text-muted'}`}
+          >
+            استلام من المحل
+          </p>
+          <p
+            className={`text-xs mt-1 font-bold ${deliveryType === 'pickup' ? 'text-brand-500' : 'text-text-secondary'}`}
+          >
+            مجاناً
+          </p>
         </button>
       </div>
 
@@ -144,9 +183,17 @@ export default function DeliveryOptions({ onDeliveryChange, orderSubtotal = 0 }:
                           : 'border-border bg-surface-tertiary hover:border-border-light'
                       }`}
                     >
-                      <span className={`text-sm font-bold ${selectedMethodId === m._id ? 'text-text-primary' : 'text-text-secondary'}`}>{m.name}</span>
-                      <span className={`text-xs ${selectedMethodId === m._id ? 'text-brand-500' : 'text-text-muted'}`}>
-                        {m.depositType === 'total_amount' ? 'عربون: الإجمالي كامل' : 'عربون: تكلفة الشحن'}
+                      <span
+                        className={`text-sm font-bold ${selectedMethodId === m._id ? 'text-text-primary' : 'text-text-secondary'}`}
+                      >
+                        {m.name}
+                      </span>
+                      <span
+                        className={`text-xs ${selectedMethodId === m._id ? 'text-brand-500' : 'text-text-muted'}`}
+                      >
+                        {m.depositType === 'total_amount'
+                          ? 'عربون: الإجمالي كامل'
+                          : 'عربون: تكلفة الشحن'}
                       </span>
                     </button>
                   ))}
@@ -178,7 +225,9 @@ export default function DeliveryOptions({ onDeliveryChange, orderSubtotal = 0 }:
               {selectedGov && (
                 <div className="space-y-2 pt-1">
                   <div className="flex items-center justify-between p-3 rounded-xl bg-brand-500/5 border border-brand-500/15">
-                    <span className="text-sm text-text-muted">تكلفة الشحن لـ {selectedGovName}</span>
+                    <span className="text-sm text-text-muted">
+                      تكلفة الشحن لـ {selectedGovName}
+                    </span>
                     <span className="text-sm font-black text-brand-500">{shippingCost} جنيه</span>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-xl bg-amber-500/5 border border-amber-500/20">
@@ -209,10 +258,19 @@ export default function DeliveryOptions({ onDeliveryChange, orderSubtotal = 0 }:
               <Icon name="MapIcon" size={32} className="text-brand-500 mx-auto mb-2" />
               <p className="text-xs text-text-muted">افتح الخريطة</p>
             </div>
-            <a href="https://maps.google.com/?q=أبو+كارتونة+الجيزة" target="_blank" rel="noopener noreferrer" className="absolute inset-0 flex items-end p-3">
+            <a
+              href="https://maps.google.com/?q=أبو+كارتونة+الجيزة"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="absolute inset-0 flex items-end p-3"
+            >
               <span className="btn-primary px-4 py-2 text-xs font-bold flex items-center gap-1.5 relative z-10">
                 <span className="relative z-10">افتح في Google Maps</span>
-                <Icon name="ArrowTopRightOnSquareIcon" size={12} className="text-bg-deep relative z-10" />
+                <Icon
+                  name="ArrowTopRightOnSquareIcon"
+                  size={12}
+                  className="text-bg-deep relative z-10"
+                />
               </span>
             </a>
           </div>

@@ -107,9 +107,7 @@ const Footer = memo(function Footer() {
                 <AppLogo size={36} />
               </div>
               <div className="flex flex-col leading-tight">
-                <span className="text-xl font-black text-white tracking-tight">
-                  أبوكرتونة
-                </span>
+                <span className="text-xl font-black text-white tracking-tight">أبوكرتونة</span>
                 <span
                   className="text-[10px] font-bold tracking-[0.2em] uppercase"
                   style={{ color: BRAND }}
@@ -123,8 +121,8 @@ const Footer = memo(function Footer() {
               className="text-[13px] leading-[1.85] mb-7 max-w-xs"
               style={{ color: 'rgba(148,163,184,0.65)' }}
             >
-              نوفر لك القوة لتصنع مستقبلك — قطع هاردوير أصلية، أسعار تنافسية،
-              وتوصيل لجميع المحافظات.
+              نوفر لك القوة لتصنع مستقبلك — قطع هاردوير أصلية، أسعار تنافسية، وتوصيل لجميع
+              المحافظات.
             </p>
 
             <div className="flex items-center gap-3">
@@ -251,12 +249,8 @@ const Footer = memo(function Footer() {
                     dir="ltr"
                     className="text-[13px] font-medium truncate w-full"
                     style={{ color: 'rgba(203,213,225,0.7)' }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.color = 'rgba(203,213,225,0.95)')
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.color = 'rgba(203,213,225,0.7)')
-                    }
+                    onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(203,213,225,0.95)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(203,213,225,0.7)')}
                   >
                     +20 106 795 7449
                   </span>
@@ -274,12 +268,8 @@ const Footer = memo(function Footer() {
                   <span
                     className="text-[13px] font-medium truncate w-full"
                     style={{ color: 'rgba(203,213,225,0.7)' }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.color = 'rgba(203,213,225,0.95)')
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.color = 'rgba(203,213,225,0.7)')
-                    }
+                    onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(203,213,225,0.95)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(203,213,225,0.7)')}
                   >
                     info@abocartona.com
                   </span>
@@ -296,18 +286,12 @@ const Footer = memo(function Footer() {
             borderTop: '1px solid rgba(255,255,255,0.05)',
           }}
         >
-          <p
-            className="text-[12px] font-medium"
-            style={{ color: 'rgba(148,163,184,0.4)' }}
-          >
-            {new Date().getFullYear()} <span style={{ color: 'rgba(203,213,225,0.6)' }}>أبوكرتونة</span>.
-            {' '}جميع الحقوق محفوظة.
+          <p className="text-[12px] font-medium" style={{ color: 'rgba(148,163,184,0.4)' }}>
+            {new Date().getFullYear()}{' '}
+            <span style={{ color: 'rgba(203,213,225,0.6)' }}>أبوكرتونة</span>. جميع الحقوق محفوظة.
           </p>
           <div className="flex items-center gap-2">
-            <div
-              className="w-1 h-1 rounded-full"
-              style={{ background: BRAND, opacity: 0.4 }}
-            />
+            <div className="w-1 h-1 rounded-full" style={{ background: BRAND, opacity: 0.4 }} />
             <span
               className="text-[10px] font-bold tracking-[0.2em] uppercase"
               style={{ color: 'rgba(148,163,184,0.35)' }}

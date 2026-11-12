@@ -1,36 +1,7 @@
 import { NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
+import { isAdmin as isAuthed } from '@/lib/adminAuth';
 import { connectDB } from '@/lib/db';
 import { Product } from '@/models/Product';
-
-function isAuthed(req: Request) {
-  const authHeader = req.headers.get('Authorization');
-  if (authHeader?.startsWith('Bearer ')) {
-    const token = authHeader.substring(7);
-    // Accept the bypass token from our new auth system
-    if (token === 'bypass-token-for-admin') {
-      return true;
-    }
-  }
-
-  // Fallback to cookie check for backward compatibility
-  const cookie = req.headers.get('cookie') || '';
-  const match = cookie.match(/(?:^|;\s*)abo_admin_token=([^;]+)/);
-  let token = match ? decodeURIComponent(match[1]) : '';
-
-  if (token === 'bypass-token-for-admin') {
-    return true;
-  }
-
-  const secret = process.env.JWT_SECRET;
-  if (!token || !secret) return false;
-  try {
-    jwt.verify(token, secret);
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 function mapProduct(doc: any) {
   return {

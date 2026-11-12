@@ -22,26 +22,22 @@ export function validateAnimationData(data: any): boolean {
   return data !== undefined && data !== null && !isNaN(data);
 }
 
-export function safeMotionComponent(
-  Component: any,
-  props: any,
-  condition: boolean = true
-) {
+export function safeMotionComponent(Component: any, props: any, condition: boolean = true) {
   if (!condition) {
     const { initial, animate, exit, whileHover, whileTap, variants, ...safeProps } = props;
-    return <Component {...safeProps} />;
+    return React.createElement(Component, safeProps);
   }
-  return <Component {...props} />;
+  return React.createElement(Component, props);
 }
 
 export function createSafeVariants(variants: any, fallback: any = {}) {
   const safeVariants = { ...fallback };
-  
-  Object.keys(variants).forEach(key => {
+
+  Object.keys(variants).forEach((key) => {
     const variant = variants[key];
     if (typeof variant === 'object' && variant !== null) {
       safeVariants[key] = {};
-      Object.keys(variant).forEach(prop => {
+      Object.keys(variant).forEach((prop) => {
         const value = variant[prop];
         if (validateAnimationData(value)) {
           safeVariants[key][prop] = value;
@@ -49,6 +45,6 @@ export function createSafeVariants(variants: any, fallback: any = {}) {
       });
     }
   });
-  
+
   return safeVariants;
 }

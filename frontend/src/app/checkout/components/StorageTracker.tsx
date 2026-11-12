@@ -62,21 +62,32 @@ function GradientArc({ percentage }: { percentage: number }) {
 }
 
 export default function StorageTracker() {
-  const { totalStorageGB, usedStorageGB, availableStorageGB, breakdown, fillPercentage, hasStorage } =
-    useStorageTracker();
+  const {
+    totalStorageGB,
+    usedStorageGB,
+    availableStorageGB,
+    breakdown,
+    fillPercentage,
+    hasStorage,
+  } = useStorageTracker();
   const [expanded, setExpanded] = useState(false);
 
   if (!hasStorage) return null;
 
   const fillColor =
-    fillPercentage >= 90 ? 'text-red-400' : fillPercentage >= 70 ? 'text-amber-400' : 'text-indigo-400';
+    fillPercentage >= 90
+      ? 'text-red-400'
+      : fillPercentage >= 70
+        ? 'text-amber-400'
+        : 'text-indigo-400';
 
   return (
     <div
       dir="rtl"
       className="relative rounded-3xl overflow-hidden border border-white/10"
       style={{
-        background: 'linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(139,92,246,0.06) 50%, rgba(16,185,129,0.05) 100%)',
+        background:
+          'linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(139,92,246,0.06) 50%, rgba(16,185,129,0.05) 100%)',
         backdropFilter: 'blur(24px)',
         WebkitBackdropFilter: 'blur(24px)',
         boxShadow: '0 8px 32px rgba(99,102,241,0.12), inset 0 1px 0 rgba(255,255,255,0.07)',
@@ -95,7 +106,10 @@ export default function StorageTracker() {
           <div className="flex items-center gap-2">
             <div
               className="w-8 h-8 rounded-xl flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.15))', border: '1px solid rgba(99,102,241,0.3)' }}
+              style={{
+                background: 'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.15))',
+                border: '1px solid rgba(99,102,241,0.3)',
+              }}
             >
               <Icon name="ServerStackIcon" size={16} className="text-indigo-400" />
             </div>
@@ -132,7 +146,9 @@ export default function StorageTracker() {
             <div>
               <div className="flex items-baseline justify-between mb-1">
                 <span className="text-[10px] text-text-muted">إجمالي المساحة</span>
-                <span className="text-sm font-black text-text-primary">{formatGB(totalStorageGB)}</span>
+                <span className="text-sm font-black text-text-primary">
+                  {formatGB(totalStorageGB)}
+                </span>
               </div>
               <div
                 className="h-1.5 rounded-full overflow-hidden"
@@ -159,8 +175,8 @@ export default function StorageTracker() {
                       fillPercentage >= 90
                         ? 'linear-gradient(90deg, #f59e0b, #ef4444)'
                         : fillPercentage >= 70
-                        ? 'linear-gradient(90deg, #10b981, #f59e0b)'
-                        : 'linear-gradient(90deg, #6366f1, #8b5cf6)',
+                          ? 'linear-gradient(90deg, #10b981, #f59e0b)'
+                          : 'linear-gradient(90deg, #6366f1, #8b5cf6)',
                     boxShadow:
                       fillPercentage >= 90
                         ? '0 0 8px rgba(239,68,68,0.5)'
@@ -172,10 +188,15 @@ export default function StorageTracker() {
 
             <div
               className="flex items-center justify-between px-3 py-2 rounded-xl"
-              style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)' }}
+              style={{
+                background: 'rgba(16,185,129,0.1)',
+                border: '1px solid rgba(16,185,129,0.2)',
+              }}
             >
               <span className="text-[10px] text-emerald-400 font-bold">متاح لـ DATA</span>
-              <span className="text-sm font-black text-emerald-400">{formatGB(availableStorageGB)}</span>
+              <span className="text-sm font-black text-emerald-400">
+                {formatGB(availableStorageGB)}
+              </span>
             </div>
           </div>
         </div>
@@ -210,7 +231,10 @@ export default function StorageTracker() {
                     >
                       <div
                         className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
-                        style={{ background: `${meta.color}18`, border: `1px solid ${meta.color}30` }}
+                        style={{
+                          background: `${meta.color}18`,
+                          border: `1px solid ${meta.color}30`,
+                        }}
                       >
                         <Icon name={meta.icon} size={12} style={{ color: meta.color }} />
                       </div>
@@ -235,12 +259,15 @@ export default function StorageTracker() {
                 <div
                   className="flex items-center justify-between px-3 py-2 rounded-xl mt-1"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.08))',
+                    background:
+                      'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.08))',
                     border: '1px solid rgba(99,102,241,0.2)',
                   }}
                 >
                   <span className="text-[10px] font-black text-indigo-400">الإجمالي الكلي</span>
-                  <span className="text-sm font-black text-indigo-400">{formatGB(totalStorageGB)}</span>
+                  <span className="text-sm font-black text-indigo-400">
+                    {formatGB(totalStorageGB)}
+                  </span>
                 </div>
               </div>
             )}
@@ -259,9 +286,8 @@ export default function StorageTracker() {
             <p className="text-[10px] text-text-muted leading-relaxed">
               لديك{' '}
               <span className="font-black text-indigo-400">{formatGB(availableStorageGB)}</span>{' '}
-              متاحة — أضف منتجات{' '}
-              <span className="font-black text-emerald-400">DATA</span>{' '}
-              (ألعاب، أفلام، إلخ.) لملء مساحتك مجاناً!
+              متاحة — أضف منتجات <span className="font-black text-emerald-400">DATA</span> (ألعاب،
+              أفلام، إلخ.) لملء مساحتك مجاناً!
             </p>
           </div>
         )}

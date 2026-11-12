@@ -1,22 +1,8 @@
 import { NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
+import { isAdmin as isAuthed } from '@/lib/adminAuth';
 import { connectDB } from '@/lib/db';
 import { Order } from '@/models/Order';
 import { Product } from '@/models/Product';
-
-function isAuthed(req: Request) {
-  const cookie = req.headers.get('cookie') || '';
-  const match = cookie.match(/(?:^|;\s*)abo_admin_token=([^;]+)/);
-  const token = match ? decodeURIComponent(match[1]) : '';
-  const secret = process.env.JWT_SECRET;
-  if (!token || !secret) return false;
-  try {
-    jwt.verify(token, secret);
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 const MONTHS_AR = [
   'يناير',

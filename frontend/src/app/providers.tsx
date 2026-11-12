@@ -4,6 +4,8 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { ToastProvider } from '@/components/ui/Toast';
+import { MotionConfig } from 'framer-motion';
+import { motionTokens } from '@/lib/motionTokens';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(
@@ -20,9 +22,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <ToastProvider>{children}</ToastProvider>
-      </ThemeProvider>
+      <MotionConfig reducedMotion="user" transition={motionTokens.spring}>
+        <ThemeProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </ThemeProvider>
+      </MotionConfig>
     </QueryClientProvider>
   );
 }

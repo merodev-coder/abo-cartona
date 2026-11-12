@@ -10,6 +10,9 @@ export function authMiddleware(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded || typeof decoded !== 'object' || decoded.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
     req.user = decoded;
     next();
   } catch {

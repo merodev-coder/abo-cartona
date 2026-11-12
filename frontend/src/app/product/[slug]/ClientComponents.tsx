@@ -282,6 +282,7 @@ export function BuyBox({ product }: { product: any }) {
     : 0;
 
   const triggerFlyingAnimation = useCallback(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const cartIcon = document.getElementById('global-cart-icon');
     if (!cartIcon || !imageRef.current) return;
 
@@ -290,7 +291,16 @@ export function BuyBox({ product }: { product: any }) {
 
     const clone = document.createElement('div');
     const imgSrc = resolveProductImageSrc(product.images?.[0] || product.image);
-    clone.innerHTML = `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" />`;
+    const image = document.createElement('img');
+    image.src = imgSrc;
+    image.alt = '';
+    Object.assign(image.style, {
+      width: '100%',
+      height: '100%',
+      objectFit: 'cover',
+      borderRadius: '8px',
+    });
+    clone.appendChild(image);
 
     Object.assign(clone.style, {
       position: 'fixed',

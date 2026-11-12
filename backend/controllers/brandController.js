@@ -8,7 +8,7 @@ const brandSchema = z.object({
   isActive: z.boolean().default(true),
 });
 
-const updateBrandSchema = brandSchema.partial();
+const updateBrandSchema = brandSchema.partial().extend({ isActive: z.boolean().optional() });
 
 export async function listBrands(req, res, next) {
   try {
@@ -48,7 +48,7 @@ export async function createBrand(req, res, next) {
     });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid brand data', details: err.errors });
+      return res.status(400).json({ error: 'Invalid brand data', details: err.issues });
     }
     if (err.code === 11000) {
       return res.status(409).json({ error: 'Brand with this name already exists' });
@@ -79,7 +79,7 @@ export async function updateBrand(req, res, next) {
     });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid brand data', details: err.errors });
+      return res.status(400).json({ error: 'Invalid brand data', details: err.issues });
     }
     next(err);
   }

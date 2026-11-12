@@ -8,12 +8,12 @@ export function getApiUrl(endpoint: string): string {
 
 export function getAdminApiUrl(endpoint: string): string {
   const cleanEndpoint = endpoint.replace(/^\/+/, '');
-  
+
   // لو الأوردرات بتيجي من orderRoutes مباشرة:
   if (cleanEndpoint.includes('orders')) {
-    return getApiUrl(cleanEndpoint); 
+    return getApiUrl(cleanEndpoint);
   }
-  
+
   // لو حاجات تانية تبع الـ adminRoutes:
   return getApiUrl(`admin/${cleanEndpoint}`);
 }

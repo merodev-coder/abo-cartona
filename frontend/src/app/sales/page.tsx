@@ -35,7 +35,8 @@ export default function SalesPage() {
         aria-hidden="true"
         className="fixed inset-0 pointer-events-none z-0"
         style={{
-          background: 'radial-gradient(ellipse 60% 50% at 80% 10%, rgba(55,215,172,0.06) 0%, transparent 70%)',
+          background:
+            'radial-gradient(ellipse 60% 50% at 80% 10%, rgba(55,215,172,0.06) 0%, transparent 70%)',
         }}
       />
       <div
@@ -48,7 +49,12 @@ export default function SalesPage() {
       />
 
       {/* Top accent line */}
-      <div className="fixed top-0 left-0 right-0 h-px z-50" style={{ background: 'linear-gradient(90deg, transparent, rgba(55,215,172,0.3) 50%, transparent)' }} />
+      <div
+        className="fixed top-0 left-0 right-0 h-px z-50"
+        style={{
+          background: 'linear-gradient(90deg, transparent, rgba(55,215,172,0.3) 50%, transparent)',
+        }}
+      />
 
       <Header />
 
@@ -83,11 +89,16 @@ export default function SalesPage() {
                   <span
                     aria-hidden="true"
                     className="absolute left-0 right-0 bottom-[-5px] h-[3px] rounded-full"
-                    style={{ background: `linear-gradient(90deg, ${BRAND_HEX}, rgba(55,215,172,0.2), transparent)` }}
+                    style={{
+                      background: `linear-gradient(90deg, ${BRAND_HEX}, rgba(55,215,172,0.2), transparent)`,
+                    }}
                   />
                 </span>
               </h1>
-              <p className="text-[13px] mt-2 max-w-lg" style={{ color: 'rgba(148,163,184,0.5)', lineHeight: 1.7 }}>
+              <p
+                className="text-[13px] mt-2 max-w-lg"
+                style={{ color: 'rgba(148,163,184,0.5)', lineHeight: 1.7 }}
+              >
                 خصومات حصرية لفترة محدودة — اغتنم الفرصة الآن قبل انتهاء الكمية
               </p>
             </div>
@@ -100,7 +111,8 @@ export default function SalesPage() {
             <div
               className="w-full h-full"
               style={{
-                background: 'linear-gradient(90deg, transparent, rgba(55,215,172,0.2) 50%, transparent)',
+                background:
+                  'linear-gradient(90deg, transparent, rgba(55,215,172,0.2) 50%, transparent)',
                 animation: 'shimmer-sweep 3s ease-in-out infinite',
               }}
             />
@@ -120,12 +132,27 @@ export default function SalesPage() {
                     border: '1px solid rgba(255,255,255,0.05)',
                   }}
                 >
-                  <div className="w-full aspect-[4/3]" style={{ background: 'linear-gradient(135deg, #0d1420, #141e2e)' }} />
+                  <div
+                    className="w-full aspect-[4/3]"
+                    style={{ background: 'linear-gradient(135deg, #0d1420, #141e2e)' }}
+                  />
                   <div className="p-4 space-y-3">
-                    <div className="h-3 w-20 rounded-md animate-pulse" style={{ background: 'rgba(255,255,255,0.04)' }} />
-                    <div className="h-4 w-full rounded-md animate-pulse" style={{ background: 'rgba(255,255,255,0.06)' }} />
-                    <div className="h-4 w-3/4 rounded-md animate-pulse" style={{ background: 'rgba(255,255,255,0.06)' }} />
-                    <div className="h-10 w-full rounded-xl mt-2" style={{ background: 'rgba(55,215,172,0.06)' }} />
+                    <div
+                      className="h-3 w-20 rounded-md animate-pulse"
+                      style={{ background: 'rgba(255,255,255,0.04)' }}
+                    />
+                    <div
+                      className="h-4 w-full rounded-md animate-pulse"
+                      style={{ background: 'rgba(255,255,255,0.06)' }}
+                    />
+                    <div
+                      className="h-4 w-3/4 rounded-md animate-pulse"
+                      style={{ background: 'rgba(255,255,255,0.06)' }}
+                    />
+                    <div
+                      className="h-10 w-full rounded-xl mt-2"
+                      style={{ background: 'rgba(55,215,172,0.06)' }}
+                    />
                   </div>
                 </div>
               ))}
@@ -139,9 +166,19 @@ export default function SalesPage() {
                   border: '1px solid rgba(55,215,172,0.12)',
                 }}
               >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={BRAND_HEX} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
-                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-                  <line x1="7" y1="7" x2="7.01" y2="7"/>
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke={BRAND_HEX}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{ opacity: 0.5 }}
+                >
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                  <line x1="7" y1="7" x2="7.01" y2="7" />
                 </svg>
               </div>
               <p className="text-[14px] font-bold text-white/50 mb-2">لا توجد عروض حالياً</p>

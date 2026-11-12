@@ -55,7 +55,8 @@ export async function addGovernorateToMethod(req, res, next) {
   try {
     const { id } = req.params;
     const { name, cost } = req.body;
-    if (!name || cost === undefined) return res.status(400).json({ error: 'Name and cost are required' });
+    if (!name || cost === undefined)
+      return res.status(400).json({ error: 'Name and cost are required' });
     const method = await ShippingMethod.findByIdAndUpdate(
       id,
       { $push: { governorates: { name, cost: Number(cost) } } },

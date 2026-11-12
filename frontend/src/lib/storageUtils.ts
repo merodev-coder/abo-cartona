@@ -96,7 +96,10 @@ export function aggregateStorageByType(products: Product[]): StorageAggregation[
   const storageMap = new Map<string, StorageAggregation>();
 
   products
-    .filter((product) => product.type === 'storage' && product.storageCapacity && product.storageCapacity > 0)
+    .filter(
+      (product) =>
+        product.type === 'storage' && product.storageCapacity && product.storageCapacity > 0
+    )
     .forEach((product) => {
       const capacity = product.storageCapacity!; // We know it's not null from the filter
       const qty = (product as any).quantity ?? 1;
@@ -139,7 +142,7 @@ export function formatStorageCapacity(capacityGB: number): string {
 function generateStorageDisplayName(product: Product): string {
   const capacity = formatStorageCapacity(product.storageCapacity || 0);
   const subtype = product.subtype || 'Storage';
-  
+
   // Handle common storage types
   if (subtype.toLowerCase().includes('hdd') || subtype.toLowerCase().includes('hard')) {
     return `HDD ${capacity}`;
@@ -148,7 +151,7 @@ function generateStorageDisplayName(product: Product): string {
   } else if (subtype.toLowerCase().includes('nvme') || subtype.toLowerCase().includes('m.2')) {
     return `NVMe ${capacity}`;
   }
-  
+
   return `${subtype} ${capacity}`;
 }
 
@@ -162,7 +165,7 @@ export function getTotalStorageWithAggregation(products: Product[]): {
 } {
   const aggregations = aggregateStorageByType(products);
   const totalCapacityGB = aggregations.reduce((sum, agg) => sum + agg.totalCapacityGB, 0);
-  
+
   return {
     totalCapacityGB,
     aggregations,
@@ -176,20 +179,20 @@ export function getTotalStorageWithAggregation(products: Product[]): {
  */
 export function createStorageSummary(aggregations: StorageAggregation[]): string {
   if (aggregations.length === 0) return '0GB';
-  
-  const parts = aggregations.map(agg => {
+
+  const parts = aggregations.map((agg) => {
     if (agg.count === 1) {
       return agg.displayName;
     }
     return `${agg.count}x ${agg.displayName}`;
   });
-  
+
   const totalCapacity = aggregations.reduce((sum, agg) => sum + agg.totalCapacityGB, 0);
   const totalFormatted = formatStorageCapacity(totalCapacity);
-  
+
   if (parts.length === 1) {
     return `${parts[0]} = ${totalFormatted}`;
   }
-  
+
   return `${parts.join(' + ')} = ${totalFormatted}`;
 }

@@ -20,12 +20,7 @@ interface ProductCardProps {
   hasDrive?: boolean;
 }
 
-function ProductCard({
-  product,
-  onAddToCart,
-  onAddToDrive,
-  hasDrive,
-}: ProductCardProps) {
+function ProductCard({ product, onAddToCart, onAddToDrive, hasDrive }: ProductCardProps) {
   const router = useRouter();
   const { getStorageAggregation } = useStore();
   const isData = product.type === 'data';
@@ -54,6 +49,7 @@ function ProductCard({
     product.isBrandActive && product.brands && product.brands.length > 0 && !isData;
 
   const triggerFlyingAnimation = useCallback(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const cartIcon = document.getElementById('global-cart-icon');
     if (!cartIcon || !imageRef.current) return;
 
@@ -62,7 +58,16 @@ function ProductCard({
 
     const clone = document.createElement('div');
     const imgSrc = resolveProductImageSrc(product.images?.[0] || product.image);
-    clone.innerHTML = `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;" />`;
+    const image = document.createElement('img');
+    image.src = imgSrc;
+    image.alt = '';
+    Object.assign(image.style, {
+      width: '100%',
+      height: '100%',
+      objectFit: 'cover',
+      borderRadius: '12px',
+    });
+    clone.appendChild(image);
 
     Object.assign(clone.style, {
       position: 'fixed',
@@ -163,7 +168,8 @@ function ProductCard({
       >
         {/* ── Card Shell ── */}
         <motion.div
-          whileHover={{ y: -6, rotateX: 3, rotateY: -3 }}
+          whileHover={{ y: -3 }}
+          whileTap={{ scale: 0.99 }}
           transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
           style={{ transformStyle: 'preserve-3d' }}
           className="neumorphic-card relative flex flex-col h-full overflow-hidden"
@@ -260,10 +266,9 @@ function ProductCard({
                     border: '1px solid rgba(52,211,153,0.3)',
                   }}
                 >
-                  {product.storageCapacity! >= 1000 
-                    ? `${(product.storageCapacity! / 1000).toFixed(1)}TB` 
-                    : `${product.storageCapacity}GB`
-                  }
+                  {product.storageCapacity! >= 1000
+                    ? `${(product.storageCapacity! / 1000).toFixed(1)}TB`
+                    : `${product.storageCapacity}GB`}
                 </span>
               )}
             </div>
@@ -492,8 +497,10 @@ function ProductCard({
                 <div className="flex items-end gap-2">
                   <div>
                     <span className="text-xl font-black leading-none" style={{ color: '#f1f5f9' }}>
-                      {(isData && (!product.price || product.price === 0) && (product.gbSize ?? 0) > 0
-                        ? (product.gbSize! * 0.5)
+                      {(isData &&
+                      (!product.price || product.price === 0) &&
+                      (product.gbSize ?? 0) > 0
+                        ? product.gbSize! * 0.5
                         : product.price
                       ).toLocaleString('ar-EG')}
                     </span>

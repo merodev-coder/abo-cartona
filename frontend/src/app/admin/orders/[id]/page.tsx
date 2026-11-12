@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import BostaShipButton from './components/BostaShipButton';
 import Footer from '@/components/Footer';
+import DepositReview from '@/components/admin/DepositReview';
 import { getApiUrl } from '@/lib/apiConfig';
 
 interface OrderItem {
@@ -41,6 +42,11 @@ interface Order {
   totalPrice: number;
   capacityGB: number;
   uploadedPhotoUrl: string | null;
+  depositStatus?: string;
+  depositAmountMinor?: number;
+  remainingBalanceMinor?: number;
+  paymentMethod?: string;
+  depositHistory?: { status: string; at: string; by: string; reason?: string }[];
   status: string;
   deliveryMethod: string;
   selectedShippingMethod: string | null;
@@ -96,9 +102,15 @@ export default function AdminOrderDetails({ params }: { params: Promise<{ id: st
 
     params.then(({ id }) => {
       setOrderId(id);
-      fetch(getApiUrl(`orders/${id}`))
+      fetch(getApiUrl(`orders/${id}`), {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
+        cache: 'no-store',
+      })
         .then((r) => {
-          if (r.status === 404) { setNotFound(true); return null; }
+          if (r.status === 404) {
+            setNotFound(true);
+            return null;
+          }
           if (!r.ok) throw new Error('fetch failed');
           return r.json();
         })
@@ -166,11 +178,25 @@ export default function AdminOrderDetails({ params }: { params: Promise<{ id: st
                       : '—'}
                   </p>
                 </div>
-                <span className={`px-4 py-1.5 rounded-lg text-sm font-bold border ${STATUS_STYLE[order.status] ?? STATUS_STYLE.Cancelled}`}>
+                <span
+                  className={`px-4 py-1.5 rounded-lg text-sm font-bold border ${STATUS_STYLE[order.status] ?? STATUS_STYLE.Cancelled}`}
+                >
                   {STATUS_LABEL[order.status] ?? order.status}
                 </span>
               </div>
 
+              {order.depositStatus && order.depositStatus !== 'NOT_REQUIRED' && (
+                <div className="mb-6">
+                  <DepositReview
+                    orderID={order.orderID}
+                    depositStatus={order.depositStatus}
+                    depositAmountMinor={order.depositAmountMinor}
+                    remainingBalanceMinor={order.remainingBalanceMinor}
+                    paymentMethod={order.paymentMethod}
+                    depositHistory={order.depositHistory}
+                  />
+                </div>
+              )}
               {/* Customer Information Section */}
               <div className="mb-6">
                 <h3 className="text-body-lg font-bold text-text-primary mb-4 font-heading flex items-center gap-2">
@@ -203,7 +229,7 @@ export default function AdminOrderDetails({ params }: { params: Promise<{ id: st
                     </p>
                   </div>
                 </div>
-                
+
                 {/* Shipping Address - Only show for delivery orders */}
                 {order.deliveryMethod === 'delivery' && (
                   <div className="mt-4">
@@ -213,7 +239,7 @@ export default function AdminOrderDetails({ params }: { params: Promise<{ id: st
                         {order.customerDetails?.address || order.address || '—'}
                       </p>
                     </div>
-                    
+
                     {/* Shipping Method Details */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                       {order.selectedShippingMethod && (
@@ -257,8 +283,12 @@ export default function AdminOrderDetails({ params }: { params: Promise<{ id: st
                       <Icon name="CubeIcon" size={20} className="text-text-muted" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-body-sm font-bold text-text-primary line-clamp-1">{item.name}</h4>
-                      <p className="text-caption text-text-muted mt-0.5">الكمية: {item.quantity || 1}</p>
+                      <h4 className="text-body-sm font-bold text-text-primary line-clamp-1">
+                        {item.name}
+                      </h4>
+                      <p className="text-caption text-text-muted mt-0.5">
+                        الكمية: {item.quantity || 1}
+                      </p>
                     </div>
                     <div className="text-left flex-shrink-0">
                       <p className="text-body-sm font-bold text-brand-500">
@@ -271,59 +301,83 @@ export default function AdminOrderDetails({ params }: { params: Promise<{ id: st
             </div>
 
             {/* Store Pickup Information */}
-                {order.deliveryMethod === 'pickup' && order.pickupLocation && (
-                  <div className="glass-card rounded-2xl p-6">
-                    <h3 className="text-body-lg font-bold text-text-primary mb-4 font-heading flex items-center gap-2">
-                      <Icon name="BuildingStorefrontIcon" size={20} className="text-brand-500" />
-                      معلومات الاستلام من المحل
-                    </h3>
-                    <div className="space-y-4">
-                      <div className="flex items-start gap-3 p-4 rounded-xl bg-brand-500/5 border border-brand-500/15">
-                        <Icon name="MapPinIcon" size={18} className="text-brand-500 mt-0.5 flex-shrink-0" />
-                        <div className="flex-1">
-                          <p className="text-sm font-black text-text-primary mb-1">{order.pickupLocation.storeName}</p>
-                          <p className="text-xs text-text-muted leading-relaxed">{order.pickupLocation.address}</p>
-                          <a
-                            href={`https://maps.google.com/?q=${order.pickupLocation.coordinates.lat},${order.pickupLocation.coordinates.lng}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-2 inline-flex items-center gap-1 text-xs text-brand-500 font-bold hover:underline"
-                          >
-                            <Icon name="MapIcon" size={12} />
-                            افتح في جوجل ماب
-                          </a>
-                        </div>
+            {order.deliveryMethod === 'pickup' && order.pickupLocation && (
+              <div className="glass-card rounded-2xl p-6">
+                <h3 className="text-body-lg font-bold text-text-primary mb-4 font-heading flex items-center gap-2">
+                  <Icon name="BuildingStorefrontIcon" size={20} className="text-brand-500" />
+                  معلومات الاستلام من المحل
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3 p-4 rounded-xl bg-brand-500/5 border border-brand-500/15">
+                    <Icon
+                      name="MapPinIcon"
+                      size={18}
+                      className="text-brand-500 mt-0.5 flex-shrink-0"
+                    />
+                    <div className="flex-1">
+                      <p className="text-sm font-black text-text-primary mb-1">
+                        {order.pickupLocation.storeName}
+                      </p>
+                      <p className="text-xs text-text-muted leading-relaxed">
+                        {order.pickupLocation.address}
+                      </p>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.pickupLocation.address)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-flex items-center gap-1 text-xs text-brand-500 font-bold hover:underline"
+                      >
+                        <Icon name="MapIcon" size={12} />
+                        افتح في جوجل ماب
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
+                      <Icon
+                        name="ClockIcon"
+                        size={18}
+                        className="text-amber-400 mt-0.5 flex-shrink-0"
+                      />
+                      <div>
+                        <p className="text-sm font-bold text-text-primary mb-1">ساعات العمل</p>
+                        <p className="text-xs text-text-muted">
+                          {order.pickupLocation.workingHours}
+                        </p>
                       </div>
+                    </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
-                          <Icon name="ClockIcon" size={18} className="text-amber-400 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-sm font-bold text-text-primary mb-1">ساعات العمل</p>
-                            <p className="text-xs text-text-muted">{order.pickupLocation.workingHours}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-500/5 border border-blue-500/20">
-                          <Icon name="PhoneIcon" size={18} className="text-blue-400 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-sm font-bold text-text-primary mb-1">رقم المحل</p>
-                            <p className="text-xs text-text-muted" dir="ltr">{order.pickupLocation.phone}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 p-3 rounded-xl bg-green-500/5 border border-green-500/20">
-                        <Icon name="CheckCircleIcon" size={15} className="text-green-400 flex-shrink-0" />
-                        <p className="text-xs text-green-400 font-bold">
-                          بدون رسوم شحن • بدون عربون • الدفع عند الاستلام
+                    <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-500/5 border border-blue-500/20">
+                      <Icon
+                        name="PhoneIcon"
+                        size={18}
+                        className="text-blue-400 mt-0.5 flex-shrink-0"
+                      />
+                      <div>
+                        <p className="text-sm font-bold text-text-primary mb-1">رقم المحل</p>
+                        <p className="text-xs text-text-muted" dir="ltr">
+                          {order.pickupLocation.phone}
                         </p>
                       </div>
                     </div>
                   </div>
-                )}
 
-                {/* Storage-Data Mapping */}
+                  <div className="flex items-center gap-2 p-3 rounded-xl bg-green-500/5 border border-green-500/20">
+                    <Icon
+                      name="CheckCircleIcon"
+                      size={15}
+                      className="text-green-400 flex-shrink-0"
+                    />
+                    <p className="text-xs text-green-400 font-bold">
+                      بدون رسوم شحن • بدون عربون • الدفع عند الاستلام
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Storage-Data Mapping */}
             {order.storageDataMapping && order.storageDataMapping.length > 0 && (
               <div className="glass-card rounded-2xl p-6">
                 <h3 className="text-body-lg font-bold text-text-primary mb-4 font-heading flex items-center gap-2">
@@ -332,7 +386,10 @@ export default function AdminOrderDetails({ params }: { params: Promise<{ id: st
                 </h3>
                 <div className="space-y-4">
                   {order.storageDataMapping.map((mapping, idx) => (
-                    <div key={idx} className="bg-surface-secondary rounded-xl border border-border overflow-hidden">
+                    <div
+                      key={idx}
+                      className="bg-surface-secondary rounded-xl border border-border overflow-hidden"
+                    >
                       <div className="p-4 border-b border-border bg-brand-500/5">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
@@ -340,7 +397,9 @@ export default function AdminOrderDetails({ params }: { params: Promise<{ id: st
                               <Icon name="CircleStackIcon" size={18} className="text-brand-500" />
                             </div>
                             <div>
-                              <h4 className="text-body-sm font-bold text-text-primary">{mapping.storageName}</h4>
+                              <h4 className="text-body-sm font-bold text-text-primary">
+                                {mapping.storageName}
+                              </h4>
                               <p className="text-caption text-text-muted">
                                 السعة: {mapping.storageCapacity?.toLocaleString('ar-EG')} GB
                               </p>
@@ -355,10 +414,19 @@ export default function AdminOrderDetails({ params }: { params: Promise<{ id: st
                       {mapping.assignedData && mapping.assignedData.length > 0 ? (
                         <div className="p-3 space-y-2">
                           {mapping.assignedData.map((data, dataIdx) => (
-                            <div key={dataIdx} className="flex items-center gap-3 p-2 rounded-lg bg-surface-tertiary/50">
-                              <Icon name="FolderIcon" size={16} className="text-amber-400 flex-shrink-0" />
+                            <div
+                              key={dataIdx}
+                              className="flex items-center gap-3 p-2 rounded-lg bg-surface-tertiary/50"
+                            >
+                              <Icon
+                                name="FolderIcon"
+                                size={16}
+                                className="text-amber-400 flex-shrink-0"
+                              />
                               <div className="flex-1 min-w-0">
-                                <p className="text-xs font-medium text-text-primary line-clamp-1">{data.dataName}</p>
+                                <p className="text-xs font-medium text-text-primary line-clamp-1">
+                                  {data.dataName}
+                                </p>
                               </div>
                               <span className="text-[10px] text-text-muted flex-shrink-0">
                                 {data.sizeGB?.toLocaleString('ar-EG')} GB
@@ -366,15 +434,22 @@ export default function AdminOrderDetails({ params }: { params: Promise<{ id: st
                             </div>
                           ))}
                           <div className="flex items-center justify-between pt-2 border-t border-border/50 mt-2">
-                            <span className="text-xs text-text-muted">إجمالي البيانات على هذا الجهاز:</span>
+                            <span className="text-xs text-text-muted">
+                              إجمالي البيانات على هذا الجهاز:
+                            </span>
                             <span className="text-xs font-bold text-brand-500">
-                              {mapping.assignedData.reduce((acc, d) => acc + (d.sizeGB || 0), 0).toLocaleString('ar-EG')} GB
+                              {mapping.assignedData
+                                .reduce((acc, d) => acc + (d.sizeGB || 0), 0)
+                                .toLocaleString('ar-EG')}{' '}
+                              GB
                             </span>
                           </div>
                         </div>
                       ) : (
                         <div className="p-4 text-center">
-                          <p className="text-caption text-text-muted">لا توجد بيانات مخصصة لهذا الجهاز</p>
+                          <p className="text-caption text-text-muted">
+                            لا توجد بيانات مخصصة لهذا الجهاز
+                          </p>
                         </div>
                       )}
                     </div>
@@ -383,16 +458,24 @@ export default function AdminOrderDetails({ params }: { params: Promise<{ id: st
 
                 <div className="mt-4 p-4 rounded-xl bg-brand-500/5 border border-brand-500/20">
                   <div className="flex items-center justify-between">
-                    <span className="text-body-sm font-bold text-text-primary">إجمالي أجهزة التخزين:</span>
+                    <span className="text-body-sm font-bold text-text-primary">
+                      إجمالي أجهزة التخزين:
+                    </span>
                     <span className="text-body-sm font-bold text-brand-500">
                       {order.storageDataMapping.length} جهاز
                     </span>
                   </div>
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-body-sm font-bold text-text-primary">إجمالي البيانات المخزنة:</span>
+                    <span className="text-body-sm font-bold text-text-primary">
+                      إجمالي البيانات المخزنة:
+                    </span>
                     <span className="text-body-sm font-bold text-brand-500">
                       {order.storageDataMapping
-                        .reduce((acc, m) => acc + (m.assignedData?.reduce((a, d) => a + (d.sizeGB || 0), 0) || 0), 0)
+                        .reduce(
+                          (acc, m) =>
+                            acc + (m.assignedData?.reduce((a, d) => a + (d.sizeGB || 0), 0) || 0),
+                          0
+                        )
                         .toLocaleString('ar-EG')}{' '}
                       GB
                     </span>
@@ -404,7 +487,9 @@ export default function AdminOrderDetails({ params }: { params: Promise<{ id: st
 
           <div className="md:w-80 w-full space-y-6">
             <div className="glass-card rounded-2xl p-6">
-              <h3 className="text-body-lg font-bold text-text-primary mb-4 font-heading">إجمالي الحساب</h3>
+              <h3 className="text-body-lg font-bold text-text-primary mb-4 font-heading">
+                إجمالي الحساب
+              </h3>
               <div className="space-y-3 mb-4">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-text-muted">إجمالي المنتجات</span>

@@ -29,7 +29,17 @@ const storageOptions = [
 ];
 
 export default function ProductFilters({ onFiltersChange, isOpen, onClose }: ProductFiltersProps) {
-  const { tags, filters, toggleTag, clearTags, fetchTags, setPriceRange, setCategory, setSubtype, availableSubCategories } = useStore();
+  const {
+    tags,
+    filters,
+    toggleTag,
+    clearTags,
+    fetchTags,
+    setPriceRange,
+    setCategory,
+    setSubtype,
+    availableSubCategories,
+  } = useStore();
   const [selectedCats, setSelectedCats] = useState<string[]>([]);
   const [localPriceRange, setLocalPriceRange] = useState<[number, number]>([0, 50000]);
   const [isDragging, setIsDragging] = useState<'min' | 'max' | null>(null);
@@ -295,9 +305,10 @@ export default function ProductFilters({ onFiltersChange, isOpen, onClose }: Pro
                     className={`
                       flex items-center gap-3 cursor-pointer group
                       px-3 py-2.5 rounded-xl transition-all duration-200
-                      ${filters.subtype === sc.slug
-                        ? 'bg-brand-500/10 border border-brand-500/30'
-                        : 'bg-surface-secondary/50 border border-transparent hover:bg-surface-secondary hover:border-border'
+                      ${
+                        filters.subtype === sc.slug
+                          ? 'bg-brand-500/10 border border-brand-500/30'
+                          : 'bg-surface-secondary/50 border border-transparent hover:bg-surface-secondary hover:border-border'
                       }
                     `}
                     whileHover={{ x: 4 }}
@@ -305,9 +316,10 @@ export default function ProductFilters({ onFiltersChange, isOpen, onClose }: Pro
                     <div
                       className={`
                         w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all duration-200
-                        ${filters.subtype === sc.slug
-                          ? 'bg-brand-500 border-brand-500'
-                          : 'border-border-dark bg-transparent group-hover:border-brand-500/50'
+                        ${
+                          filters.subtype === sc.slug
+                            ? 'bg-brand-500 border-brand-500'
+                            : 'border-border-dark bg-transparent group-hover:border-brand-500/50'
                         }
                       `}
                     >
@@ -334,9 +346,10 @@ export default function ProductFilters({ onFiltersChange, isOpen, onClose }: Pro
                     <span
                       className={`
                         text-sm font-medium flex-1 transition-colors duration-200
-                        ${filters.subtype === sc.slug
-                          ? 'text-brand-500'
-                          : 'text-text-muted group-hover:text-brand-500'
+                        ${
+                          filters.subtype === sc.slug
+                            ? 'text-brand-500'
+                            : 'text-text-muted group-hover:text-brand-500'
                         }
                       `}
                     >

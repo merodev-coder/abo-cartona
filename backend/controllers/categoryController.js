@@ -109,7 +109,7 @@ export async function createCategory(req, res, next) {
     });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid category data', details: err.errors });
+      return res.status(400).json({ error: 'Invalid category data', details: err.issues });
     }
     if (err.code === 11000) {
       return res.status(409).json({ error: 'Category for this type already exists' });
@@ -122,7 +122,10 @@ export async function createCategory(req, res, next) {
 export async function updateCategory(req, res, next) {
   try {
     const { id } = req.params;
-    const body = categorySchema.partial().parse(req.body);
+    const body = categorySchema
+      .partial()
+      .extend({ subCategories: z.array(subCategorySchema).optional() })
+      .parse(req.body);
 
     if (body.subCategories) {
       body.subCategories = body.subCategories.map((s) => ({
@@ -157,7 +160,7 @@ export async function updateCategory(req, res, next) {
     });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid category data', details: err.errors });
+      return res.status(400).json({ error: 'Invalid category data', details: err.issues });
     }
     next(err);
   }
@@ -199,7 +202,7 @@ export async function addSubCategory(req, res, next) {
     });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid subcategory data', details: err.errors });
+      return res.status(400).json({ error: 'Invalid subcategory data', details: err.issues });
     }
     next(err);
   }

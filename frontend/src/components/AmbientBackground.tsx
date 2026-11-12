@@ -1,28 +1,28 @@
-'use client'
+'use client';
 
-import React, { useMemo } from 'react'
-import { motion } from 'framer-motion'
+import React, { useMemo } from 'react';
+import { motion } from 'framer-motion';
 
-const BRAND = '#37D7AC'
-const BG = '#080C14'
+const BRAND = '#37D7AC';
+const BG = '#080C14';
 
 interface Sparkle {
-  left: string
-  top: string
-  delay: number
-  duration: number
-  size: number
-  opacity: number
+  left: string;
+  top: string;
+  delay: number;
+  duration: number;
+  size: number;
+  opacity: number;
 }
 
 interface AmbientBackgroundProps {
-  className?: string
-  children?: React.ReactNode
+  className?: string;
+  children?: React.ReactNode;
 }
 
 const useSparkles = (count: number = 28): Sparkle[] =>
   useMemo(() => {
-    const items: Sparkle[] = []
+    const items: Sparkle[] = [];
     for (let i = 0; i < count; i++) {
       items.push({
         left: `${Math.random() * 94}%`,
@@ -31,10 +31,10 @@ const useSparkles = (count: number = 28): Sparkle[] =>
         duration: 3.5 + Math.random() * 4.5,
         size: 6 + Math.random() * 11,
         opacity: 0.25 + Math.random() * 0.55,
-      })
+      });
     }
-    return items
-  }, [count])
+    return items;
+  }, [count]);
 
 const Sparkle = ({ left, top, delay, duration, size, opacity }: Sparkle) => (
   <motion.span
@@ -59,15 +59,24 @@ const Sparkle = ({ left, top, delay, duration, size, opacity }: Sparkle) => (
       ease: 'easeInOut',
     }}
   >
-    <svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke={BRAND} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 24 24"
+      width="100%"
+      height="100%"
+      fill="none"
+      stroke={BRAND}
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5L12 2Z" />
     </svg>
   </motion.span>
-)
+);
 
 const AmbientBackground: React.FC<AmbientBackgroundProps> = ({ className = '', children }) => {
-  const sparkles = useSparkles(35)
-  const midSparkles = useSparkles(12)
+  const sparkles = useSparkles(35);
+  const midSparkles = useSparkles(12);
 
   return (
     <div className={`relative ${className}`}>
@@ -140,7 +149,7 @@ const AmbientBackground: React.FC<AmbientBackgroundProps> = ({ className = '', c
         className="pointer-events-none absolute inset-0 opacity-[0.018]"
         style={{
           backgroundImage:
-            'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.82\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\'/%3E%3C/svg%3E")',
+            "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
           zIndex: 1,
         }}
       />
@@ -149,7 +158,7 @@ const AmbientBackground: React.FC<AmbientBackgroundProps> = ({ className = '', c
         {children}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default AmbientBackground
+export default AmbientBackground;

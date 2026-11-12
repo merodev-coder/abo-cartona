@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import { setupInventorySyncMiddleware } from './inventoryMiddleware.js';
 
 const orderItemSchema = new mongoose.Schema(
   {
@@ -7,6 +6,7 @@ const orderItemSchema = new mongoose.Schema(
     name: { type: String },
     price: { type: Number },
     quantity: { type: Number, default: 1 },
+    selectedBrand: String,
   },
   { _id: false }
 );
@@ -55,6 +55,32 @@ const orderSchema = new mongoose.Schema(
     selectedShippingMethod: { type: String },
     shippingCost: { type: Number, default: 0 },
     requiredDeposit: { type: Number, default: 0 },
+    idempotencyKey: { type: String },
+    requestHash: { type: String },
+    customerTokenHash: { type: String, select: false },
+    orderTotalMinor: { type: Number },
+    depositAmountMinor: { type: Number, default: 0 },
+    remainingBalanceMinor: { type: Number },
+    depositStatus: {
+      type: String,
+      enum: [
+        'NOT_REQUIRED',
+        'AWAITING_DEPOSIT',
+        'PENDING_VERIFICATION',
+        'VERIFIED',
+        'REJECTED',
+        'REFUNDED',
+      ],
+      default: 'NOT_REQUIRED',
+    },
+    depositProofStorageKey: { type: String, select: false },
+    depositSubmittedAt: Date,
+    depositVerifiedAt: Date,
+    depositVerifiedBy: String,
+    depositRejectionReason: String,
+    paymentMethod: String,
+    depositHistory: [{ status: String, at: Date, by: String, reason: String }],
+    inventoryCommitted: { type: Boolean },
     trackingNumber: { type: String },
     deliveryId: { type: String },
     deliveryMethod: { type: String, enum: ['delivery', 'pickup'], default: 'delivery' },
@@ -64,11 +90,11 @@ const orderSchema = new mongoose.Schema(
       storeName: { type: String, default: 'أبوكرتونةaming Store' },
       address: { type: String, default: '9 شارع جمال، تقسيم فريد ذكي، حدائق المعصرة، القاهرة' },
       coordinates: {
-        lat: { type: Number, default: 30.0444 },
-        lng: { type: Number, default: 31.2357 }
+        lat: { type: Number },
+        lng: { type: Number },
       },
       workingHours: { type: String, default: 'يومياً من 12:00 ظهراً إلى 12:00 منتصف الليل' },
-      phone: { type: String, default: '01234567890' }
+      phone: { type: String },
     },
     storageDataMapping: [storageDataMappingSchema],
     status: {
@@ -81,6 +107,9 @@ const orderSchema = new mongoose.Schema(
 );
 
 // Setup inventory sync middleware
-setupInventorySyncMiddleware(orderSchema);
+// Inventory changes belong to the checkout/review transaction, never save hooks.
+orderSchema.index({ idempotencyKey: 1 }, { unique: true, sparse: true });
+orderSchema.index({ deliveryMethod: 1, depositStatus: 1, createdAt: -1 });
+orderSchema.index({ createdAt: -1 });
 
 export const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);

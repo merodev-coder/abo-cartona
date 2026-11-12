@@ -8,7 +8,7 @@ import { createBostaTicket } from '../utils/bostaService.js';
 export async function createBostaShipment(req, res, next) {
   try {
     const { orderId } = req.body;
-    
+
     if (!orderId) {
       return res.status(400).json({ error: 'Order ID is required' });
     }
@@ -19,6 +19,8 @@ export async function createBostaShipment(req, res, next) {
       return res.status(404).json({ error: 'Order not found' });
     }
 
+    if (order.deliveryMethod === 'pickup' || order.status === 'Cancelled')
+      return res.status(409).json({ error: 'This order cannot be shipped' });
     // Check if already shipped with Bosta
     if (order.shippingProvider === 'Bosta' && order.trackingNumber) {
       return res.status(400).json({ error: 'Order already has Bosta tracking' });
@@ -26,16 +28,16 @@ export async function createBostaShipment(req, res, next) {
 
     // Get customer details
     const customerDetails = order.customerDetails || {};
-    
+
     // Validate required fields
     if (!customerDetails.name || !customerDetails.phone || !customerDetails.address) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Missing customer information',
         details: {
           name: !customerDetails.name ? 'Customer name is required' : null,
           phone: !customerDetails.phone ? 'Customer phone is required' : null,
-          address: !customerDetails.address ? 'Customer address is required' : null
-        }
+          address: !customerDetails.address ? 'Customer address is required' : null,
+        },
       });
     }
 
@@ -45,13 +47,13 @@ export async function createBostaShipment(req, res, next) {
       phone: customerDetails.phone,
       address: customerDetails.address,
       email: customerDetails.email,
-      orderId: order.orderID
+      orderId: order.orderID,
     });
 
     if (!bostaResult.success) {
-      return res.status(500).json({ 
+      return res.status(500).json({
         error: 'Failed to create Bosta shipment',
-        details: bostaResult.error
+        details: bostaResult.error,
       });
     }
 
@@ -62,20 +64,21 @@ export async function createBostaShipment(req, res, next) {
         trackingNumber: bostaResult.trackingNumber,
         deliveryId: bostaResult.deliveryId,
         shippingProvider: 'Bosta',
-        status: 'جاري شحن الطلب'
+        status: 'Shipping',
       },
       { new: true }
     );
 
-    console.log(`[Bosta] Manual shipment created for order ${orderId}: ${bostaResult.trackingNumber}`);
+    console.log(
+      `[Bosta] Manual shipment created for order ${orderId}: ${bostaResult.trackingNumber}`
+    );
 
     res.json({
       success: true,
       trackingNumber: bostaResult.trackingNumber,
       trackingUrl: bostaResult.trackingUrl,
-      order: updatedOrder
+      order: updatedOrder,
     });
-
   } catch (error) {
     console.error('[Admin] Failed to create Bosta shipment:', error);
     next(error);

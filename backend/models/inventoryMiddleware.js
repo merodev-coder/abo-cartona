@@ -16,7 +16,7 @@ export function setupInventorySyncMiddleware(orderSchema) {
         .filter(item => item.product && item.quantity > 0)
         .map(item => ({
           updateOne: {
-            filter: { _id: item.product },
+            filter: { _id: item.product, type: { $nin: ['data', 'games'] } },
             update: { $inc: { stockCount: item.quantity } }
           }
         }));
@@ -115,7 +115,7 @@ export async function restoreStockForOrder(order, session) {
     .filter(item => item.product && item.quantity > 0)
     .map(item => ({
       updateOne: {
-        filter: { _id: item.product },
+        filter: { _id: item.product, type: { $nin: ['data', 'games'] } },
         update: { $inc: { stockCount: item.quantity } }
       }
     }));

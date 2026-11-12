@@ -1,3 +1,4 @@
+import { isAdmin } from '@/lib/adminAuth';
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import { Tag } from '@/models/Tag';
@@ -19,6 +20,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  if (!isAdmin(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   await connectDB();
   const body = (await req.json().catch(() => null)) as { name?: string } | null;
   const name = (body?.name || '').trim();

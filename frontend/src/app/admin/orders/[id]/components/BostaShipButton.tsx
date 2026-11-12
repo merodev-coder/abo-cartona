@@ -30,7 +30,14 @@ async function patchStatus(orderId: string, status: string, extra?: Record<strin
   return res.json();
 }
 
-export default function BostaShipButton({ orderId, status, deliveryMethod = 'delivery', selectedShippingMethod, shippingProvider, trackingNumber }: OrderActionsProps) {
+export default function BostaShipButton({
+  orderId,
+  status,
+  deliveryMethod = 'delivery',
+  selectedShippingMethod,
+  shippingProvider,
+  trackingNumber,
+}: OrderActionsProps) {
   const [loading, setLoading] = useState<string | null>(null);
   const router = useRouter();
 
@@ -38,9 +45,10 @@ export default function BostaShipButton({ orderId, status, deliveryMethod = 'del
   const isCompleted = status === 'Completed';
   const isShipping = status === 'Shipping';
   const isPending = status === 'Pending' || status === 'AwaitingPickup';
-  
+
   // Check if this is a Bosta order
-  const isBostaOrder = shippingProvider === 'Bosta' || 
+  const isBostaOrder =
+    shippingProvider === 'Bosta' ||
     (selectedShippingMethod && selectedShippingMethod.toLowerCase().includes('bosta')) ||
     (selectedShippingMethod && selectedShippingMethod.includes('بوسطة'));
 
@@ -76,19 +84,23 @@ export default function BostaShipButton({ orderId, status, deliveryMethod = 'del
         }
         throw new Error(data.error || 'فشل الشحن مع بوسطة');
       }
-      
+
       // Update order status to Shipping
       await patchStatus(orderId, 'Shipping', { shippingProvider: 'Bosta' });
-      
+
       if (data.trackingNumber) {
-        alert(`تم إنشاء الشحنة بنجاح!\nرقم التتبع: ${data.trackingNumber}\nرابط التتبع: ${data.trackingUrl}`);
+        alert(
+          `تم إنشاء الشحنة بنجاح!\nرقم التتبع: ${data.trackingNumber}\nرابط التتبع: ${data.trackingUrl}`
+        );
       } else {
         alert('تم إنشاء الشحنة بنجاح!');
       }
     });
 
   const handleOtherShip = () =>
-    run('other', () => patchStatus(orderId, 'Shipping', { shippingProvider: 'other' }).then(() => {}));
+    run('other', () =>
+      patchStatus(orderId, 'Shipping', { shippingProvider: 'other' }).then(() => {})
+    );
 
   const handleConfirmReceipt = () =>
     run('confirm', () => patchStatus(orderId, 'Completed').then(() => {}));

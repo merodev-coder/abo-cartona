@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, AnimatePresence, Variants } from 'framer-motion';
+import { motion, AnimatePresence, Variants, useReducedMotion } from 'framer-motion';
 import {
   springSoft,
   springStiff,
@@ -37,11 +37,12 @@ export function ScrollReveal({
   once?: boolean;
   threshold?: number;
 }) {
+  const reduce = useReducedMotion();
   const offsets: Record<string, { y?: number; x?: number }> = {
-    up: { y: 40 },
-    down: { y: -40 },
-    left: { x: 60 },
-    right: { x: -60 },
+    up: { y: 10 },
+    down: { y: -10 },
+    left: { x: 10 },
+    right: { x: -10 },
   };
 
   const variant: Variants = {
@@ -56,7 +57,7 @@ export function ScrollReveal({
       y: 0,
       scale: 1,
       transition: {
-        duration: 0.7,
+        duration: 0.24,
         delay,
         ease: [0.25, 0.46, 0.45, 0.94],
       },
@@ -65,10 +66,10 @@ export function ScrollReveal({
 
   return (
     <motion.div
-      initial="hidden"
+      initial={false}
       whileInView="visible"
       viewport={{ once, margin: `${threshold}px` }}
-      variants={variant}
+      variants={reduce ? undefined : variant}
       className={className}
     >
       {children}
@@ -101,7 +102,7 @@ export function StaggerReveal({
 
   return (
     <motion.div
-      initial="hidden"
+      initial={false}
       whileInView="visible"
       viewport={revealViewport}
       variants={customContainer}

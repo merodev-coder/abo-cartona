@@ -19,24 +19,27 @@ export async function testInventorySync() {
     console.log('🧪 Starting Inventory Sync Test...');
 
     // 1. Create test products
-    const testProducts = await Product.create([
-      {
-        name: 'Test Product 1',
-        type: 'accessories',
-        price: 100,
-        stockCount: 10,
-        isBrandActive: true,
-        brands: ['Test Brand']
-      },
-      {
-        name: 'Test Product 2',
-        type: 'storage',
-        price: 200,
-        stockCount: 5,
-        isBrandActive: true,
-        brands: ['Test Brand']
-      }
-    ], { session });
+    const testProducts = await Product.create(
+      [
+        {
+          name: 'Test Product 1',
+          type: 'accessories',
+          price: 100,
+          stockCount: 10,
+          isBrandActive: true,
+          brands: ['Test Brand'],
+        },
+        {
+          name: 'Test Product 2',
+          type: 'storage',
+          price: 200,
+          stockCount: 5,
+          isBrandActive: true,
+          brands: ['Test Brand'],
+        },
+      ],
+      { session }
+    );
 
     console.log(`✅ Created ${testProducts.length} test products`);
 
@@ -47,26 +50,26 @@ export async function testInventorySync() {
         name: 'Test Customer',
         email: 'test@example.com',
         phone: '01234567890',
-        address: 'Test Address'
+        address: 'Test Address',
       },
       items: [
         {
           product: testProducts[0]._id,
           name: 'Test Product 1',
           price: 100,
-          quantity: 2
+          quantity: 2,
         },
         {
           product: testProducts[1]._id,
           name: 'Test Product 2',
           price: 200,
-          quantity: 1
-        }
+          quantity: 1,
+        },
       ],
       totalPrice: 400,
       totalGB: 0,
       capacityGB: 0,
-      status: 'Pending'
+      status: 'Pending',
     };
 
     const order = await Order.create([orderData], { session });
@@ -79,9 +82,11 @@ export async function testInventorySync() {
     console.log(`✅ Decremented stock for ${decrementResult.decremented} products`);
 
     // 4. Check stock levels after decrement
-    const productsAfterDecrement = await Product.find({ _id: { $in: testProducts.map(p => p._id) } }).session(session);
+    const productsAfterDecrement = await Product.find({
+      _id: { $in: testProducts.map((p) => p._id) },
+    }).session(session);
     console.log('📊 Stock levels after order creation:');
-    productsAfterDecrement.forEach(product => {
+    productsAfterDecrement.forEach((product) => {
       console.log(`   ${product.name}: ${product.stockCount} units`);
     });
 
@@ -94,15 +99,17 @@ export async function testInventorySync() {
     console.log(`✅ Deleted order ${createdOrder.orderID}`);
 
     // 7. Check final stock levels
-    const productsAfterRestore = await Product.find({ _id: { $in: testProducts.map(p => p._id) } }).session(session);
+    const productsAfterRestore = await Product.find({
+      _id: { $in: testProducts.map((p) => p._id) },
+    }).session(session);
     console.log('📊 Final stock levels after order deletion:');
-    productsAfterRestore.forEach(product => {
+    productsAfterRestore.forEach((product) => {
       console.log(`   ${product.name}: ${product.stockCount} units`);
     });
 
     // 8. Verify stock is restored to original levels
-    const isStockRestored = productsAfterRestore.every((product, index) => 
-      product.stockCount === testProducts[index].stockCount
+    const isStockRestored = productsAfterRestore.every(
+      (product, index) => product.stockCount === testProducts[index].stockCount
     );
 
     if (isStockRestored) {
@@ -118,13 +125,12 @@ export async function testInventorySync() {
       success: isStockRestored,
       message: isStockRestored ? 'Inventory sync test passed' : 'Inventory sync test failed',
       details: {
-        originalStock: testProducts.map(p => ({ name: p.name, stock: p.stockCount })),
-        finalStock: productsAfterRestore.map(p => ({ name: p.name, stock: p.stockCount })),
+        originalStock: testProducts.map((p) => ({ name: p.name, stock: p.stockCount })),
+        finalStock: productsAfterRestore.map((p) => ({ name: p.name, stock: p.stockCount })),
         orderDeleted: createdOrder.orderID,
-        itemsRestored: stockRestoreResult.restored
-      }
+        itemsRestored: stockRestoreResult.restored,
+      },
     };
-
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
@@ -132,7 +138,7 @@ export async function testInventorySync() {
     return {
       success: false,
       message: error.message,
-      error: error
+      error: error,
     };
   }
 }
@@ -151,7 +157,7 @@ export async function testDeleteOrderController() {
       price: 150,
       stockCount: 8,
       isBrandActive: true,
-      brands: ['Test Brand']
+      brands: ['Test Brand'],
     });
 
     const testOrder = await Order.create({
@@ -160,23 +166,25 @@ export async function testDeleteOrderController() {
         name: 'Controller Test Customer',
         email: 'controller@example.com',
         phone: '01234567890',
-        address: 'Controller Test Address'
+        address: 'Controller Test Address',
       },
       items: [
         {
           product: testProduct._id,
           name: 'Controller Test Product',
           price: 150,
-          quantity: 3
-        }
+          quantity: 3,
+        },
       ],
       totalPrice: 450,
       totalGB: 0,
       capacityGB: 0,
-      status: 'Pending'
+      status: 'Pending',
     });
 
-    console.log(`✅ Created test order ${testOrder.orderID} with product stock: ${testProduct.stockCount}`);
+    console.log(
+      `✅ Created test order ${testOrder.orderID} with product stock: ${testProduct.stockCount}`
+    );
 
     // Simulate the controller's deleteOrder function
     const session = await mongoose.startSession();
@@ -185,7 +193,7 @@ export async function testDeleteOrderController() {
     try {
       // Find the order
       const order = await Order.findById(testOrder._id).session(session);
-      
+
       if (!order) {
         throw new Error('Order not found');
       }
@@ -202,7 +210,7 @@ export async function testDeleteOrderController() {
 
       // Check final stock
       const finalProduct = await Product.findById(testProduct._id);
-      
+
       const expectedStock = testProduct.stockCount + 3; // Original stock + restored quantity
       const success = finalProduct.stockCount === expectedStock;
 
@@ -214,26 +222,26 @@ export async function testDeleteOrderController() {
 
       return {
         success,
-        message: success ? 'Controller deleteOrder test passed' : 'Controller deleteOrder test failed',
+        message: success
+          ? 'Controller deleteOrder test passed'
+          : 'Controller deleteOrder test failed',
         details: {
           originalStock: testProduct.stockCount,
           restoredQuantity: 3,
           finalStock: finalProduct.stockCount,
-          expectedStock
-        }
+          expectedStock,
+        },
       };
-
     } catch (error) {
       await session.abortTransaction();
       session.endSession();
       throw error;
     }
-
   } catch (error) {
     console.error('❌ Controller test failed:', error.message);
     return {
       success: false,
-      message: error.message
+      message: error.message,
     };
   }
 }
@@ -260,15 +268,15 @@ export async function runAllInventoryTests() {
 
   // Summary
   console.log('=== Test Summary ===');
-  const passedTests = results.filter(r => r.success).length;
+  const passedTests = results.filter((r) => r.success).length;
   const totalTests = results.length;
-  
-  results.forEach(result => {
+
+  results.forEach((result) => {
     console.log(`${result.success ? '✅' : '❌'} ${result.test}: ${result.message}`);
   });
 
   console.log(`\n📊 Results: ${passedTests}/${totalTests} tests passed`);
-  
+
   if (passedTests === totalTests) {
     console.log('🎉 All tests passed! Inventory sync is working correctly.');
   } else {

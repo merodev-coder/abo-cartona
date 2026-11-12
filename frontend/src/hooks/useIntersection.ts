@@ -17,7 +17,7 @@ export function useIntersection(
     root = null,
     rootMargin = '200px 0px',
     threshold = 0,
-  }: UseIntersectionOptions = {},
+  }: UseIntersectionOptions = {}
 ): boolean {
   const [isIntersecting, setIsIntersecting] = useState(disabled);
 
@@ -39,7 +39,7 @@ export function useIntersection(
           setIsIntersecting(false);
         }
       },
-      { root, rootMargin, threshold },
+      { root, rootMargin, threshold }
     );
 
     observer.observe(element);

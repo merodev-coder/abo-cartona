@@ -48,7 +48,10 @@ const config: Config = {
         
         // Surface - Glassmorphic dark
         surface: {
-          DEFAULT: "rgba(18, 24, 38, 0.4)",
+          DEFAULT: "var(--color-surface)",
+          secondary: "var(--color-surface-secondary)",
+          tertiary: "var(--color-surface-tertiary)",
+          elevated: "var(--color-surface-elevated)",
           card: "#0D1220",
           hover: "rgba(18, 24, 38, 0.6)",
         },
@@ -76,8 +79,18 @@ const config: Config = {
         }
       },
       
+      fontSize: {
+        h1: ['clamp(2rem, 1.2rem + 3vw, 3.5rem)', { lineHeight: '1.45', fontWeight: '700' }],
+        h2: ['clamp(1.5rem, 1.15rem + 1.5vw, 2.25rem)', { lineHeight: '1.5', fontWeight: '700' }],
+        h3: ['clamp(1.125rem, 1rem + .5vw, 1.5rem)', { lineHeight: '1.6', fontWeight: '600' }],
+        body: ['1rem', { lineHeight: '1.85' }],
+        'body-sm': ['.875rem', { lineHeight: '1.85' }],
+        caption: ['.8125rem', { lineHeight: '1.75' }],
+      },
       fontFamily: {
-        readex: ["Readex Pro", "sans-serif"],
+        readex: ["var(--font-readex)", "Arial", "sans-serif"],
+        heading: ["var(--font-readex)", "Arial", "sans-serif"],
+        body: ["var(--font-readex)", "Arial", "sans-serif"],
       },
       
       borderRadius: {

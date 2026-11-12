@@ -67,7 +67,21 @@ const AppImage = memo(function AppImage({
     () => typeof imageSrc === 'string' && imageSrc.startsWith('data:'),
     [imageSrc]
   );
-  const resolvedUnoptimized = unoptimized || isExternalUrl || isDataUri;
+  const canOptimizeRemote = useMemo(() => {
+    if (!isExternalUrl) return true;
+    try {
+      const url = new URL(imageSrc);
+      return (
+        url.protocol === 'https:' &&
+        (url.hostname === 'utfs.io' ||
+          url.hostname.endsWith('.ufs.sh') ||
+          ['images.unsplash.com', 'img.rocket.new'].includes(url.hostname))
+      );
+    } catch {
+      return false;
+    }
+  }, [imageSrc, isExternalUrl]);
+  const resolvedUnoptimized = unoptimized || isDataUri || !canOptimizeRemote;
 
   // Generate optimized src with format parameter
   const optimizedSrc = useMemo(() => {
