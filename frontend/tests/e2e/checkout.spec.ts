@@ -96,6 +96,103 @@ async function pickup(page: Page) {
   await page.getByRole('button', { name: /متابعة:/ }).click();
   await expect(page.getByRole('heading', { name: 'عربون تأكيد الحجز' })).toBeVisible();
 }
+
+async function configurePaymentMethods(page: Page, instaPayConfirmed = true) {
+  await page.route('**/api/orders/payment-config', (route) =>
+    route.fulfill({
+      json: {
+        methods: [
+          {
+            id: 'vodafone',
+            code: 'VODAFONE_CASH',
+            name: 'فودافون كاش',
+            destination: '+20 106 795 7449',
+          },
+          ...(instaPayConfirmed
+            ? [
+                {
+                  id: 'instapay',
+                  code: 'INSTAPAY',
+                  name: 'إنستاباي',
+                  destination: '+20 106 795 7449',
+                },
+              ]
+            : []),
+        ],
+        configuration: { destinationReady: true, uploadReady: true },
+        maxBytes: 5242880,
+      },
+    })
+  );
+}
+
+test('configured payment cards default to Vodafone, copy the exact phone, and switch to InstaPay', async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await setup(page);
+  await configurePaymentMethods(page);
+  await pickup(page);
+  await expect(page.getByRole('radio', { name: /Vodafone Cash/ })).toBeChecked();
+  await expect(page.getByRole('heading', { name: 'التحويل عبر فودافون كاش' })).toBeVisible();
+  await expect(page.getByText('لم يضبط المتجر', { exact: false })).toHaveCount(0);
+  const number = page.locator('bdi').filter({ hasText: '+20 106 795 7449' });
+  await expect(number).toHaveAttribute('dir', 'ltr');
+  await page.getByRole('button', { name: 'نسخ الرقم', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'تم نسخ الرقم', exact: true })).toBeVisible();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('+201067957449');
+  await page.getByRole('radio', { name: /InstaPay/ }).check();
+  await expect(page.getByRole('heading', { name: 'التحويل عبر إنستاباي' })).toBeVisible();
+  const request = page.waitForRequest((r) => r.url().endsWith('/api/orders/proofs'));
+  await uploadScreenshot(page);
+  expect((await request).postData()).toContain('instapay');
+  await page.getByRole('radio', { name: /Vodafone Cash/ }).check();
+  await expect(page.getByRole('img', { name: 'معاينة إيصال التحويل' })).toHaveCount(0);
+  await expect(page.getByText('تم حفظ الصورة بأمان.', { exact: false })).toHaveCount(0);
+});
+
+test('unconfirmed InstaPay remains disabled without blocking Vodafone uploads', async ({
+  page,
+}) => {
+  await setup(page);
+  await configurePaymentMethods(page, false);
+  await pickup(page);
+  await expect(page.getByRole('radio', { name: /InstaPay/ })).toBeDisabled();
+  await expect(page.getByRole('radio', { name: /Vodafone Cash/ })).toBeChecked();
+  await uploadScreenshot(page);
+});
+
+test('clipboard failure offers manual copying without pretending success', async ({ page }) => {
+  await setup(page);
+  await configurePaymentMethods(page);
+  await page.addInitScript(() =>
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: () => Promise.reject(new Error('denied')) },
+    })
+  );
+  await pickup(page);
+  await page.getByRole('button', { name: 'نسخ الرقم', exact: true }).click();
+  await expect(page.getByText('تعذر النسخ.', { exact: false })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'تم نسخ الرقم', exact: true })).toHaveCount(0);
+});
+
+for (const width of [390, 1440]) {
+  test(`payment selector and upload fit ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 1800 });
+    await setup(page);
+    await configurePaymentMethods(page);
+    await pickup(page);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
+    ).toBe(true);
+    const section = page.locator('section[aria-label="إثبات دفع العربون"]');
+    await section.evaluate((element) =>
+      window.scrollTo(0, element.getBoundingClientRect().top + window.scrollY - 100)
+    );
+    await section.screenshot({ path: `qa/payment-methods-${width}.png`, animations: 'disabled' });
+  });
+}
 test('customer browses the storefront, adds a product and opens the cart', async ({ page }) => {
   await setup(page);
   await page.goto('/');
@@ -182,7 +279,7 @@ test('below-minimum pickup is blocked with an explicit policy', async ({ page })
 test('missing payment configuration never invents a destination', async ({ page }) => {
   await setup(page, 650, false);
   await pickup(page);
-  await expect(page.getByText('لم يضبط المتجر حساب التحويل بعد.', { exact: false })).toBeVisible();
+  await expect(page.getByText('طرق التحويل غير متاحة حالياً.', { exact: false })).toBeVisible();
   await expect(page.locator('input[type=file]')).toBeVisible();
   let uploaded = false;
   await page.route('**/api/orders/proofs', (route) => {
@@ -433,13 +530,16 @@ test('admin can review pending evidence with a required rejection reason', async
           depositStatus: 'PENDING_VERIFICATION',
           depositAmountMinor: 10000,
           remainingBalanceMinor: 55000,
-          paymentMethod: 'instapay',
+          paymentMethod: 'INSTAPAY',
+          paymentDestination: '+20 106 795 7449',
           createdAt: new Date().toISOString(),
         },
       },
     });
   });
   await page.goto('/admin/orders/AC-qa');
+  await expect(page.getByText('إنستاباي', { exact: true })).toBeVisible();
+  await expect(page.getByRole('main').getByText('+20 106 795 7449', { exact: true })).toBeVisible();
   const reject = page.getByRole('button', { name: 'رفض الإثبات', exact: true });
   await expect(reject).toBeDisabled();
   await page.getByRole('textbox', { name: 'سبب الرفض' }).fill('الصورة غير واضحة');

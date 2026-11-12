@@ -83,6 +83,7 @@ const orderSchema = new mongoose.Schema(
     depositVerifiedBy: String,
     depositRejectionReason: String,
     paymentMethod: String,
+    paymentDestination: String,
     depositHistory: [{ status: String, at: Date, by: String, reason: String }],
     inventoryCommitted: { type: Boolean },
     trackingNumber: { type: String },

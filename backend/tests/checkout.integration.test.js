@@ -31,6 +31,9 @@ test('isolated replica-set checkout and payment lifecycle', { timeout: 600000 },
     })
   ).toString('base64');
   process.env.PAYMENT_INSTAPAY_DESTINATION = 'isolated-fixture';
+  process.env.PAYMENT_INSTAPAY_CONFIRMED = 'true';
+  process.env.PAYMENT_VODAFONE_DESTINATION = '';
+  process.env.PAYMENT_VODAFONE_ENABLED = 'false';
   let failUpload = false;
   t.mock.method(UTApi.prototype, 'uploadFiles', async (file, options) => {
     assert.equal(options.acl, 'private');
@@ -76,9 +79,15 @@ test('isolated replica-set checkout and payment lifecycle', { timeout: 600000 },
     'X-Checkout-Token': owner,
     'Idempotency-Key': crypto.randomUUID(),
   };
-  async function proof(token = owner, bytes = image, checkout = {}, amountMinor = 10000) {
+  async function proof(
+    token = owner,
+    bytes = image,
+    checkout = {},
+    amountMinor = 10000,
+    method = 'instapay'
+  ) {
     const form = new FormData();
-    form.append('paymentMethod', 'instapay');
+    form.append('paymentMethod', method);
     form.append(
       'checkout',
       JSON.stringify({
@@ -133,13 +142,13 @@ test('isolated replica-set checkout and payment lifecycle', { timeout: 600000 },
             destinationReady: true,
             uploadReady: false,
           });
-        process.env.UPLOADTHING_TOKEN = 'sk_invalid_raw_key';
-        const invalid = await (await fetch(`${base}/payment-config`)).json();
-        assert.equal(invalid.configuration.uploadReady, false);
-        assert.equal(invalid.methods.length, 1);
-      } finally {
-        process.env.UPLOADTHING_TOKEN = token;
-      }
+          process.env.UPLOADTHING_TOKEN = 'sk_invalid_raw_key';
+          const invalid = await (await fetch(`${base}/payment-config`)).json();
+          assert.equal(invalid.configuration.uploadReady, false);
+          assert.equal(invalid.methods.length, 1);
+        } finally {
+          process.env.UPLOADTHING_TOKEN = token;
+        }
       }
     );
     await t.test('administrative reads and proof access require authentication', async () => {
@@ -164,14 +173,27 @@ test('isolated replica-set checkout and payment lifecycle', { timeout: 600000 },
     const { proofId } = await upload.json();
     await t.test('disabling the destination after upload blocks final payment claims', async () => {
       const destination = process.env.PAYMENT_INSTAPAY_DESTINATION;
-      process.env.PAYMENT_INSTAPAY_DESTINATION = '   ';
+      process.env.PAYMENT_INSTAPAY_CONFIRMED = 'false';
       try {
         assert.equal((await submit(body(proofId))).status, 400);
         assert.equal(await Order.countDocuments(), 0);
       } finally {
         process.env.PAYMENT_INSTAPAY_DESTINATION = destination;
+        process.env.PAYMENT_INSTAPAY_CONFIRMED = 'true';
       }
     });
+    await t.test(
+      'changing the receiving destination invalidates previously uploaded evidence',
+      async () => {
+        process.env.PAYMENT_INSTAPAY_DESTINATION = 'changed-fixture';
+        try {
+          assert.equal((await submit(body(proofId))).status, 400);
+          assert.equal(await Order.countDocuments(), 0);
+        } finally {
+          process.env.PAYMENT_INSTAPAY_DESTINATION = 'isolated-fixture';
+        }
+      }
+    );
     await t.test('pickup submission without evidence is rejected', async () => {
       assert.equal((await submit(body(undefined))).status, 400);
     });
@@ -225,6 +247,8 @@ test('isolated replica-set checkout and payment lifecycle', { timeout: 600000 },
         assert.equal(saved.fulfillmentMethod, 'pickup');
         assert.equal(saved.deliveryFee, 0);
         assert.equal(saved.depositAmount, 100);
+        assert.equal(saved.paymentMethod, 'INSTAPAY');
+        assert.equal(saved.paymentDestination, 'isolated-fixture');
         assert.equal(saved.remainingBalance, 550);
         assert.equal(saved.pickupLocation.address, 'القاهرة - حدائق حلوان');
         assert.ok(saved.depositProofReference.startsWith('uploadthing:'));
@@ -502,7 +526,8 @@ test('isolated replica-set checkout and payment lifecycle', { timeout: 600000 },
         });
         await Product.updateOne({ _id: product._id }, { $set: { stockCount: 1 } });
         const destination = process.env.PAYMENT_INSTAPAY_DESTINATION;
-        delete process.env.PAYMENT_INSTAPAY_DESTINATION;
+        process.env.PAYMENT_INSTAPAY_DESTINATION = '';
+        process.env.PAYMENT_INSTAPAY_CONFIRMED = 'false';
         try {
           const response = await submit(
             body(undefined, {
@@ -521,7 +546,37 @@ test('isolated replica-set checkout and payment lifecycle', { timeout: 600000 },
           assert.equal(result.remainingBalanceMinor, 65000);
         } finally {
           process.env.PAYMENT_INSTAPAY_DESTINATION = destination;
+          process.env.PAYMENT_INSTAPAY_CONFIRMED = 'true';
         }
+      }
+    );
+    await t.test(
+      'Vodafone order stores the server-bound method and receiving destination for admin review',
+      async () => {
+        process.env.PAYMENT_VODAFONE_ENABLED = 'true';
+        delete process.env.PAYMENT_VODAFONE_DESTINATION;
+        await Product.updateOne({ _id: product._id }, { $set: { stockCount: 1 } });
+        const proofId = (await (await proof(owner, image, {}, 10000, 'VODAFONE_CASH')).json())
+          .proofId;
+        const response = await submit(
+          body(proofId, {
+            paymentMethod: 'INSTAPAY',
+            paymentDestination: 'untrusted-client-value',
+          }),
+          { ...headers, 'Idempotency-Key': crypto.randomUUID() }
+        );
+        assert.equal(response.status, 201, await response.clone().text());
+        const order = (await response.json()).order;
+        const details = await (
+          await fetch(`${base}/${order.orderID}`, { headers: { Authorization: `Bearer ${admin}` } })
+        ).json();
+        assert.equal(details.order.paymentMethod, 'VODAFONE_CASH');
+        assert.equal(details.order.paymentDestination, '+20 106 795 7449');
+        assert.equal(details.order.depositStatus, 'PENDING_VERIFICATION');
+        assert.ok(
+          (await Order.findOne({ orderID: order.orderID }).select('+depositProofFileKey'))
+            .depositProofFileKey
+        );
       }
     );
   } finally {

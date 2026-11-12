@@ -5,7 +5,8 @@ import { PaymentProof } from '../models/PaymentProof.js';
 import { checkoutQuote } from '../utils/checkoutQuote.js';
 import { depositRequirement, validateProofRequirement } from '../utils/depositRequirement.js';
 import { commitInventory } from '../utils/commitInventory.js';
-import { customerToken, ownerHash, paymentMethods } from './depositController.js';
+import { customerToken, ownerHash } from './depositController.js';
+import { paymentForProof } from '../utils/paymentConfig.js';
 import { sendOrderReceipt } from '../utils/emailService.js';
 import { storeConfig } from '../utils/storeConfig.js';
 
@@ -84,11 +85,7 @@ export async function createOrder(req, res, next) {
             statusCode: 400,
           });
         validateProofRequirement(proof, amounts, body.deliveryMethod);
-        if (!paymentMethods().some((method) => method.id === proof.paymentMethod))
-          throw Object.assign(
-            new Error('لم يتم إعداد حساب التحويل لهذه الطريقة. يرجى التواصل مع المتجر.'),
-            { statusCode: 400 }
-          );
+        paymentForProof(proof);
       }
       // Pickup orders do not lock stock while evidence is unverified. Approval
       // atomically checks and commits stock. Delivery retains immediate allocation.
@@ -121,6 +118,7 @@ export async function createOrder(req, res, next) {
             depositProofFileKey: proof?.key,
             depositProofReference: proof ? `uploadthing:${proof.key}` : undefined,
             paymentMethod: proof?.paymentMethod,
+            paymentDestination: proof?.paymentDestination,
             depositSubmittedAt: proof ? new Date() : undefined,
             depositHistory: proof
               ? [

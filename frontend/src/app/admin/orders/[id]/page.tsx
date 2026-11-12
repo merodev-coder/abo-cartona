@@ -47,6 +47,7 @@ interface Order {
   depositAmountMinor?: number;
   remainingBalanceMinor?: number;
   paymentMethod?: string;
+  paymentDestination?: string;
   depositHistory?: { status: string; at: string; by: string; reason?: string }[];
   status: string;
   deliveryMethod: string;
@@ -196,6 +197,7 @@ export default function AdminOrderDetails({ params }: { params: Promise<{ id: st
                     depositAmountMinor={order.depositAmountMinor}
                     remainingBalanceMinor={order.remainingBalanceMinor}
                     paymentMethod={order.paymentMethod}
+                    paymentDestination={order.paymentDestination}
                     depositHistory={order.depositHistory}
                   />
                 </div>

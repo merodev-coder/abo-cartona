@@ -4,6 +4,7 @@ const schema = new mongoose.Schema(
     key: { type: String, required: true, unique: true },
     ownerHash: { type: String, required: true, index: true },
     paymentMethod: { type: String, required: true },
+    paymentDestination: { type: String },
     provider: { type: String, enum: ['uploadthing', 'legacy'], default: 'legacy' },
     amountMinor: { type: Number, min: 0 },
     fulfillmentMethod: { type: String, enum: ['pickup', 'delivery'] },

@@ -12,6 +12,7 @@ interface Props {
   depositAmountMinor?: number;
   remainingBalanceMinor?: number;
   paymentMethod?: string;
+  paymentDestination?: string;
   depositHistory?: { status: string; at: string; by: string; reason?: string }[];
 }
 export default function DepositReview(props: Props) {
@@ -91,8 +92,23 @@ export default function DepositReview(props: Props) {
         {formatEGP((props.remainingBalanceMinor || 0) / 100)}
       </p>
       <p className="text-sm text-text-secondary">
-        طريقة الدفع: <bdi>{props.paymentMethod}</bdi>
+        طريقة الدفع:{' '}
+        <bdi>
+          {props.paymentMethod === 'VODAFONE_CASH' || props.paymentMethod === 'vodafone'
+            ? 'فودافون كاش'
+            : props.paymentMethod === 'INSTAPAY' || props.paymentMethod === 'instapay'
+              ? 'إنستاباي'
+              : props.paymentMethod || 'غير محدد'}
+        </bdi>
       </p>
+      {props.paymentDestination && (
+        <p className="text-sm text-text-secondary">
+          حساب التحويل وقت الإرسال:{' '}
+          <bdi dir="ltr" className="select-all">
+            {props.paymentDestination}
+          </bdi>
+        </p>
+      )}
       <p className="text-sm text-amber-300">
         راجع التحويل في حساب المتجر قبل الموافقة. الصورة وحدها لا تؤكد وصول الأموال.
       </p>

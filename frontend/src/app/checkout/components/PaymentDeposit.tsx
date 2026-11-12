@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { getApiUrl } from '@/lib/apiConfig';
 import { checkoutToken } from '@/lib/checkoutSession';
 import Currency from '@/components/ui/Currency';
-import { UploadCloud } from 'lucide-react';
+import { UploadCloud, Smartphone, Wallet, Check, Copy } from 'lucide-react';
 import { usePaymentConfig } from '@/hooks/usePaymentConfig';
 
 interface Props {
@@ -41,6 +41,8 @@ export default function DepositPaymentUpload({
   const [preview, setPreview] = useState<string | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const request = useRef<XMLHttpRequest | null>(null);
   const selectedFile = useRef<File | null>(null);
   const selectedMethod = method || methods[0]?.id || '';
@@ -51,6 +53,39 @@ export default function DepositPaymentUpload({
     !isError &&
     loaded;
   useEffect(() => () => request.current?.abort(), []);
+  useEffect(
+    () => () => {
+      if (copyTimer.current) clearTimeout(copyTimer.current);
+    },
+    []
+  );
+  const chooseMethod = (id: string) => {
+    if (id === selectedMethod) return;
+    const pending = request.current;
+    request.current = null;
+    pending?.abort();
+    selectedFile.current = null;
+    setProgress(null);
+    setPreview(null);
+    onReceiptUpload(null);
+    setError('');
+    setCopyStatus('idle');
+    setMethod(id);
+  };
+  const copyDestination = async () => {
+    if (!active) return;
+    try {
+      const value = /^\+?[\d ()-]+$/.test(active.destination)
+        ? active.destination.replace(/[ ()-]/g, '')
+        : active.destination;
+      await navigator.clipboard.writeText(value);
+      setCopyStatus('copied');
+      if (copyTimer.current) clearTimeout(copyTimer.current);
+      copyTimer.current = setTimeout(() => setCopyStatus('idle'), 3000);
+    } catch {
+      setCopyStatus('error');
+    }
+  };
   useEffect(
     () => () => {
       if (preview) URL.revokeObjectURL(preview);
@@ -134,9 +169,6 @@ export default function DepositPaymentUpload({
           سيتم خصم المبلغ المدفوع من إجمالي الطلب، والمتبقي عند{' '}
           {isPickup ? 'الاستلام من المحل' : 'التوصيل'}.
         </p>
-        <p className="text-sm text-text-muted">
-          الصورة إثبات مساعد؛ يتم تأكيد التحويل بعد مراجعة المتجر.
-        </p>
         {isPickup && (
           <p className="text-sm text-text-muted">الحد الأدنى لطلب الاستلام من المحل 100 جنيه.</p>
         )}
@@ -189,40 +221,132 @@ export default function DepositPaymentUpload({
           </button>
         </div>
       ) : !methods.length ? (
-        <p role="status" className="text-amber-300">
-          لم يضبط المتجر حساب التحويل بعد. يمكنك اختيار الصورة، لكن لا يمكن رفع مطالبة دفع أو إتمام
-          الطلب قبل إعداد الحساب. يرجى التواصل مع المتجر قبل التحويل.
+        <p
+          role="status"
+          className="rounded-xl border border-border p-4 text-sm text-text-secondary"
+        >
+          طرق التحويل غير متاحة حالياً. يرجى التواصل مع المتجر لتأكيد بيانات الدفع.
         </p>
       ) : (
         <>
-          <fieldset disabled={progress !== null || receiptFile !== null} className="space-y-3">
+          <fieldset disabled={progress !== null} className="space-y-3">
             <legend className="text-sm font-semibold mb-3">طريقة الدفع</legend>
-            <div className={`grid gap-3 ${methods.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-              {methods.map((m) => (
-                <label
-                  key={m.id}
-                  className="selection-card flex gap-2 items-center p-4 rounded-xl border border-border has-[:checked]:border-brand-500 cursor-pointer"
-                >
-                  <input
-                    type="radio"
-                    name="payment-method"
-                    value={m.id}
-                    checked={selectedMethod === m.id}
-                    onChange={() => setMethod(m.id)}
-                  />
-                  <span>{m.name}</span>
-                </label>
-              ))}
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { id: 'vodafone', name: 'فودافون كاش', latin: 'Vodafone Cash', Icon: Smartphone },
+                { id: 'instapay', name: 'إنستاباي', latin: 'InstaPay', Icon: Wallet },
+              ].map((m) => {
+                const available = methods.some((candidate) => candidate.id === m.id);
+                const selected = selectedMethod === m.id && available;
+                return (
+                  <motion.label
+                    key={m.id}
+                    animate={{
+                      borderColor: selected
+                        ? 'var(--color-brand-500, #10b981)'
+                        : 'var(--color-border, #263244)',
+                    }}
+                    transition={{ duration: reducedMotion ? 0 : 0.18 }}
+                    className={`relative flex flex-col gap-2 min-w-0 p-3 sm:p-4 rounded-xl border focus-within:ring-2 focus-within:ring-brand-500 ${selected ? 'bg-brand-500/10' : 'bg-surface-secondary'} ${available ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}
+                  >
+                    <input
+                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
+                      type="radio"
+                      name="payment-method"
+                      value={m.id}
+                      disabled={!available}
+                      checked={selected}
+                      onChange={() => chooseMethod(m.id)}
+                      aria-label={`${m.name} ${m.latin}`}
+                    />
+                    <span className="flex items-center justify-between gap-2">
+                      <m.Icon aria-hidden="true" className="h-5 w-5 text-brand-500" />
+                      <span
+                        className={`flex h-5 w-5 items-center justify-center rounded-full border ${selected ? 'border-brand-500 bg-brand-500 text-slate-950' : 'border-border'}`}
+                      >
+                        {selected && (
+                          <motion.span
+                            initial={{ scale: reducedMotion ? 1 : 0.8 }}
+                            animate={{ scale: 1 }}
+                          >
+                            <Check aria-hidden="true" size={14} />
+                          </motion.span>
+                        )}
+                      </span>
+                    </span>
+                    <span className="text-sm font-semibold">{m.name}</span>
+                    <span dir="ltr" className="text-xs text-text-muted text-start">
+                      {m.latin}
+                    </span>
+                    {!available && <span className="text-xs text-text-muted">غير متاح حالياً</span>}
+                  </motion.label>
+                );
+              })}
             </div>
           </fieldset>
-          {active && (
-            <div className="rounded-xl border border-border p-4">
-              <p className="text-sm mb-2">حوّل قيمة العربون إلى حساب {active.name}:</p>
-              <p dir="ltr" className="font-semibold break-all text-start select-all">
-                {active.destination}
-              </p>
-            </div>
-          )}
+          <AnimatePresence mode="wait" initial={false}>
+            {active && (
+              <motion.div
+                key={active.id}
+                initial={{ opacity: 0, y: reducedMotion ? 0 : 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: reducedMotion ? 0 : 0.16 }}
+                className="rounded-xl border border-border p-4 space-y-3"
+              >
+                <h4 className="text-sm font-semibold">
+                  التحويل عبر {active.id === 'vodafone' ? 'فودافون كاش' : 'إنستاباي'}
+                </h4>
+                <p className="text-sm text-text-secondary">
+                  حول قيمة العربون المطلوبة إلى الرقم التالي:
+                </p>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <bdi
+                    dir="ltr"
+                    className="font-semibold text-lg break-all select-all tabular-nums"
+                  >
+                    {active.destination}
+                  </bdi>
+                  <button
+                    type="button"
+                    onClick={() => void copyDestination()}
+                    className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-brand-500/30 bg-brand-500/10 px-3 text-sm text-brand-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500"
+                  >
+                    <motion.span
+                      key={copyStatus}
+                      initial={{ scale: reducedMotion ? 1 : 0.85 }}
+                      animate={{ scale: 1 }}
+                    >
+                      {copyStatus === 'copied' ? (
+                        <Check aria-hidden="true" size={16} />
+                      ) : (
+                        <Copy aria-hidden="true" size={16} />
+                      )}
+                    </motion.span>
+                    {copyStatus === 'copied' ? 'تم نسخ الرقم' : 'نسخ الرقم'}
+                  </button>
+                </div>
+                <p role="status" className="text-xs text-text-muted">
+                  {copyStatus === 'error'
+                    ? 'تعذر النسخ. يمكنك تحديد الرقم ونسخه يدوياً.'
+                    : copyStatus === 'copied'
+                      ? 'تم نسخ الرقم'
+                      : ''}
+                </p>
+                <div className="border-t border-border pt-3 text-sm leading-7 text-text-secondary">
+                  <p className="mb-2 font-semibold text-text-primary">
+                    المبلغ المطلوب: <Currency value={depositAmount} />
+                  </p>
+                  <ol className="list-decimal ps-5 space-y-1">
+                    <li>حول قيمة العربون الموضحة إلى الرقم المعروض.</li>
+                    <li>احتفظ بصورة تأكيد التحويل.</li>
+                    <li>ارفع صورة التحويل في المربع بالأسفل.</li>
+                    <li>أرسل الطلب وانتظر مراجعة التحويل من المتجر.</li>
+                  </ol>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </>
       )}
       {config?.configuration?.uploadReady === false && (
@@ -334,6 +458,9 @@ export default function DepositPaymentUpload({
           </motion.span>
         ) : null}
       </motion.div>
+      <p className="text-xs leading-6 text-text-muted">
+        الصورة إثبات مساعد؛ يتم تأكيد استلام المبلغ بعد مراجعة التحويل من المتجر.
+      </p>
       <motion.p
         layout={!reducedMotion}
         id="proof-error"

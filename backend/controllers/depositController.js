@@ -9,29 +9,9 @@ import { storeConfig } from '../utils/storeConfig.js';
 import { sendDepositStatusNotice } from '../utils/emailService.js';
 import { checkoutQuote } from '../utils/checkoutQuote.js';
 import { depositRequirement, validateProofRequirement } from '../utils/depositRequirement.js';
+import { paymentMethods, paymentForProof } from '../utils/paymentConfig.js';
 
 export const ownerHash = (token) => crypto.createHash('sha256').update(token).digest('hex');
-export function paymentMethods() {
-  return [
-    {
-      id: 'vodafone',
-      name: 'Vodafone Cash',
-      destination: process.env.PAYMENT_VODAFONE_DESTINATION,
-    },
-    {
-      id: 'instapay',
-      name: 'InstaPay',
-      destination: process.env.PAYMENT_INSTAPAY_DESTINATION,
-    },
-  ]
-    .map((method) => ({ ...method, destination: method.destination?.trim() }))
-    .filter(
-      (method) =>
-        method.destination &&
-        method.destination.length <= 254 &&
-        !/[\x00-\x1f\x7f]/.test(method.destination)
-    );
-}
 export function paymentConfig(req, res) {
   res.set('Cache-Control', 'no-store').json({
     methods: paymentMethods(),
@@ -54,8 +34,10 @@ export async function uploadProof(req, res, next) {
     const token = customerToken(req);
     if (!token) return res.status(401).json({ error: 'جلسة الدفع غير صالحة.' });
     if (!storageReady()) return res.status(503).json({ error: 'رفع إثبات الدفع غير متاح حالياً.' });
-    if (!paymentMethods().some((m) => m.id === req.body.paymentMethod))
-      return res.status(400).json({ error: 'طريقة الدفع غير متاحة.' });
+    const paymentMethod = paymentMethods().find(
+      (m) => m.id === req.body.paymentMethod || m.code === req.body.paymentMethod
+    );
+    if (!paymentMethod) return res.status(400).json({ error: 'طريقة الدفع غير متاحة.' });
     if (!req.file) return res.status(400).json({ error: 'يرجى اختيار صورة.' });
     let requirement;
     let fulfillmentMethod;
@@ -123,7 +105,8 @@ export async function uploadProof(req, res, next) {
       proof = await PaymentProof.create({
         key,
         ownerHash: ownerHash(token),
-        paymentMethod: req.body.paymentMethod,
+        paymentMethod: paymentMethod.code,
+        paymentDestination: paymentMethod.destination,
         provider: 'uploadthing',
         amountMinor: requirement.depositAmountMinor,
         fulfillmentMethod,
@@ -267,11 +250,7 @@ export async function resubmitProof(req, res, next) {
         throw Object.assign(new Error('إثبات الدفع غير صالح.'), {
           statusCode: 400,
         });
-      if (!paymentMethods().some((method) => method.id === proof.paymentMethod))
-        throw Object.assign(
-          new Error('لم يتم إعداد حساب التحويل لهذه الطريقة. يرجى التواصل مع المتجر.'),
-          { statusCode: 400 }
-        );
+      const paymentMethod = paymentForProof(proof);
       const existing = await Order.findOne({
         orderID: req.params.id,
         customerTokenHash: ownerHash(token),
@@ -307,7 +286,8 @@ export async function resubmitProof(req, res, next) {
             depositProofStorageKey: proof.key,
             depositProofFileKey: proof.key,
             depositProofReference: `uploadthing:${proof.key}`,
-            paymentMethod: proof.paymentMethod,
+            paymentMethod: paymentMethod.code,
+            paymentDestination: proof.paymentDestination,
             depositSubmittedAt: new Date(),
             depositRejectionReason: null,
           },
