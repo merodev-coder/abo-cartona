@@ -18,7 +18,7 @@ export function paymentConfig(req, res) {
     configuration: {
       destinationReady: paymentMethods().length > 0,
       uploadReady: storageReady(),
-      proofAcl: process.env.UPLOADTHING_PROOF_ACL?.trim().toLowerCase() || 'private',
+      proofAcl: process.env.UPLOADTHING_PROOF_ACL?.trim().toLowerCase() || 'public',
     },
     maxBytes: Math.min(Number(process.env.PROOF_MAX_BYTES) || 5242880, 5242880),
     pickupDeposit: 100,

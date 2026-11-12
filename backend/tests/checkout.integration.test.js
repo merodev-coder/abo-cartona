@@ -30,6 +30,7 @@ test('isolated replica-set checkout and payment lifecycle', { timeout: 600000 },
       regions: ['iad1'],
     })
   ).toString('base64');
+  process.env.UPLOADTHING_PROOF_ACL = 'private';
   process.env.PAYMENT_INSTAPAY_DESTINATION = 'isolated-fixture';
   process.env.PAYMENT_INSTAPAY_CONFIRMED = 'true';
   process.env.PAYMENT_VODAFONE_DESTINATION = '';
@@ -38,7 +39,7 @@ test('isolated replica-set checkout and payment lifecycle', { timeout: 600000 },
   t.mock.method(UTApi.prototype, 'uploadFiles', async (file, options) => {
     assert.equal(
       options.acl,
-      process.env.UPLOADTHING_PROOF_ACL === 'public' ? 'public-read' : 'private'
+      process.env.UPLOADTHING_PROOF_ACL === 'private' ? 'private' : 'public-read'
     );
     assert.equal(file.type, 'image/webp');
     return failUpload
@@ -594,6 +595,32 @@ test('isolated replica-set checkout and payment lifecycle', { timeout: 600000 },
             await Order.findOne({ orderID: order.orderID }).select('+depositProofUrl')
           ).depositProofUrl.startsWith('https://test.ufs.sh/')
         );
+      }
+    );
+    await t.test(
+      'free-plan public proof URL is stored and served only through the existing admin endpoint',
+      async () => {
+        process.env.UPLOADTHING_PROOF_ACL = 'public';
+        const proofId = (await (await proof()).json()).proofId;
+        const response = await submit(body(proofId), {
+          ...headers,
+          'Idempotency-Key': crypto.randomUUID(),
+        });
+        assert.equal(response.status, 201, await response.clone().text());
+        const { order } = await response.json();
+        const saved = await Order.findOne({ orderID: order.orderID }).select(
+          '+depositProofUrl +depositProofFileKey'
+        );
+        assert.equal(saved.depositProofAcl, 'public');
+        assert.ok(saved.depositProofFileKey);
+        assert.equal(saved.depositProofUrl.startsWith('https://test.ufs.sh/f/'), true);
+        const adminView = await fetch(`${base}/${order.orderID}/proof`, {
+          headers: { Authorization: `Bearer ${admin}` },
+        });
+        assert.equal(adminView.status, 200);
+        assert.equal((await adminView.json()).url, saved.depositProofUrl);
+        const unauthorizedView = await fetch(`${base}/${order.orderID}/proof`);
+        assert.equal(unauthorizedView.status, 401);
       }
     );
   } finally {

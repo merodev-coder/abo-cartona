@@ -41,7 +41,7 @@ export function storageReady() {
   }
 }
 export function proofAcl() {
-  const configured = process.env.UPLOADTHING_PROOF_ACL?.trim().toLowerCase() || 'private';
+  const configured = process.env.UPLOADTHING_PROOF_ACL?.trim().toLowerCase() || 'public';
   if (configured !== 'public' && configured !== 'private')
     throw Object.assign(new Error('UPLOADTHING_PROOF_ACL must be public or private.'), {
       statusCode: 503,

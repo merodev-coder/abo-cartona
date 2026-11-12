@@ -12,11 +12,11 @@ test('proof ACL maps public/private configuration to the v7.7 UploadThing values
   });
   try {
     delete process.env.UPLOADTHING_PROOF_ACL;
-    assert.deepEqual(proofAcl(), { configured: 'private', uploadthing: 'private' });
+    assert.deepEqual(proofAcl(), { configured: 'public', uploadthing: 'public-read' });
     assert.deepEqual(await storeProof(Buffer.from('image')), {
       key: 'proof-key',
       url: 'https://test.ufs.sh/f/proof-key',
-      acl: 'private',
+      acl: 'public',
     });
     process.env.UPLOADTHING_PROOF_ACL = 'public';
     assert.deepEqual(proofAcl(), { configured: 'public', uploadthing: 'public-read' });
@@ -25,7 +25,13 @@ test('proof ACL maps public/private configuration to the v7.7 UploadThing values
       url: 'https://test.ufs.sh/f/proof-key',
       acl: 'public',
     });
-    assert.deepEqual(calls, ['private', 'public-read']);
+    assert.deepEqual(calls, ['public-read', 'public-read']);
+    process.env.UPLOADTHING_PROOF_ACL = 'private';
+    assert.deepEqual(proofAcl(), { configured: 'private', uploadthing: 'private' });
+    assert.deepEqual(await storeProof(Buffer.from('image')), {
+      key: 'proof-key', url: 'https://test.ufs.sh/f/proof-key', acl: 'private',
+    });
+    assert.deepEqual(calls, ['public-read', 'public-read', 'private']);
     assert.equal(
       await proofUrl('proof-key', 'public', 'https://test.ufs.sh/f/proof-key'),
       'https://test.ufs.sh/f/proof-key'

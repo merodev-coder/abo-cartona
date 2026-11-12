@@ -30,7 +30,8 @@ explicitly disabled with `PAYMENT_VODAFONE_ENABLED=false`; blank destination val
 alone no longer disable either default. Environment overrides take precedence, so
 check that any existing receiving destination matches the supplied number.
 
-Set `UPLOADTHING_PROOF_ACL=public` on the free tier, or `private` on a paid plan.
+The proof ACL defaults to `public`; set `UPLOADTHING_PROOF_ACL=public` on the
+free tier, or `private` on a paid plan.
 The backend maps these values to UploadThing v7.7.4's `public-read` and `private`
 ACL values. Public images are readable by anyone who obtains the file URL, even
 though the order dashboard itself requires admin authentication. The checkout
