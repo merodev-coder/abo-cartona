@@ -34,10 +34,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 app.use(cors({
-  origin: (origin, callback) => {
-    const allowed = (process.env.FRONTEND_ORIGINS || 'http://localhost:4029,http://localhost:4028').split(',').map((s) => s.trim());
-    callback(null, !origin || allowed.includes(origin));
-  },
+  origin: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'X-Checkout-Token', 'Idempotency-Key'],
   credentials: true

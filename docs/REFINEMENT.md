@@ -69,8 +69,9 @@ has been refunded.
    `PutObject`, `GetObject`, `DeleteObject` under `payment-proofs/*` only. Use TLS,
    provider encryption at rest and a suitable retention policy. No public bucket
    ACL is requested. Methods are disabled until destinations and storage exist.
-3. Set `FRONTEND_ORIGINS` and the actual `TRUST_PROXY_HOPS`. The default trusts no
-   proxy. Login and upload limits use shared Mongo counters, not per-process state.
+3. Set the actual `TRUST_PROXY_HOPS`. The default trusts no proxy. CORS accepts
+   requesting origins without an origin allowlist. Login and upload limits use
+   shared Mongo counters, not per-process state.
 4. MongoDB must support transactions (replica set/Atlas). Apply additive indexes
    during a controlled rollout; no production backfill or destructive migration
    was run. Existing orders are not automatically marked verified.
